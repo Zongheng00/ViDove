@@ -9,7 +9,7 @@
 
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/project-kxkg/ViDove">
     <img src="images/logo_draft.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -283,10 +283,10 @@ Use this space to list resources you find helpful and would like to give credit 
 [contributors-shield]: https://img.shields.io/github/contributors/project-kxkg/ViDove.svg?style=for-the-badge
 [contributors-url]: https://github.com/project-kxkg/ViDove/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/project-kxkg/ViDove.svg?style=for-the-badge
-[forks-url]: https://github.com/project-kxkg/ViDove/network/members
+[forks-url]: https://github.com/project-kxkg/ViDove/forks
 [stars-shield]: https://img.shields.io/github/stars/project-kxkg/ViDove.svg?style=for-the-badge
 [stars-url]: https://github.com/project-kxkg/ViDove/stargazers
 [issues-shield]: https://img.shields.io/github/issues/project-kxkg/ViDove.svg?style=for-the-badge
 [issues-url]: https://github.com/project-kxkg/ViDove/issues
 [license-shield]: https://img.shields.io/github/license/project-kxkg/ViDove.svg?style=for-the-badge
-[license-url]: https://github.com/project-kxkg/ViDove/blob/dev/LICENSE
+[license-url]: https://github.com/project-kxkg/ViDove/blob/main/LICENSE
