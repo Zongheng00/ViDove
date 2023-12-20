@@ -281,9 +281,9 @@ Use this space to list resources you find helpful and would like to give credit 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/project-kxkg/ViDove.svg?style=for-the-badge
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
+[contributors-url]: https://github.com/project-kxkg/ViDove/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/project-kxkg/ViDove.svg?style=for-the-badge
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
+[forks-url]: https://github.com/project-kxkg/ViDove/network/members
 [stars-shield]: https://img.shields.io/github/stars/project-kxkg/ViDove.svg?style=for-the-badge
 [stars-url]: https://github.com/project-kxkg/ViDove/stargazers
 [issues-shield]: https://img.shields.io/github/issues/project-kxkg/ViDove.svg?style=for-the-badge
