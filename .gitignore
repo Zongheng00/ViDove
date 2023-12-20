@@ -1,0 +1,17 @@
+__pycache__/
+.DS_Store
+.idea/
+downloads/
+results/
+logs/
+test/
+.vscode/
+test.py
+test.srt
+test.txt
+log_*.csv
+log.csv
+.chroma
+*.ini
+local_dump/
+.pytest_cache/

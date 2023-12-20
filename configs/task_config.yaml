@@ -1,0 +1,35 @@
+# configuration for each task
+source_lang: EN
+target_lang: ZH
+field: General
+
+# ASR config
+ASR:
+  ASR_model: whisper
+  whisper_config:
+    whisper_model: tiny
+    method: stable
+  
+# pre-process module config
+pre_process: 
+  sentence_form: True
+  spell_check: False
+  term_correct: True
+
+# Translation module config
+translation:
+  model: gpt-4
+  chunk_size: 1000
+
+# post-process module config
+post_process: 
+  check_len_and_split: True
+  remove_trans_punctuation: True
+
+# output type that user receive
+output_type: 
+  subtitle: srt
+  video: True
+  bilingual: True
+
+

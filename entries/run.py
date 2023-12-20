@@ -1,0 +1,90 @@
+import __init_lib_path
+import logging
+from yaml import Loader, Dumper, load, dump
+from src.task import Task
+import openai
+import argparse
+import os
+from pathlib import Path
+from datetime import datetime
+import shutil
+from uuid import uuid4
+
+"""
+    Main entry for terminal environment.
+    Use it for debug and development purpose. 
+    Usage: python3 entries/run.py [-h] [--link LINK] [--video_file VIDEO_FILE] [--audio_file AUDIO_FILE] [--srt_file SRT_FILE] [--continue CONTINUE]
+              [--launch_cfg LAUNCH_CFG] [--task_cfg TASK_CFG]
+"""
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--link", help="youtube video link here", default=None, type=str, required=False)
+    parser.add_argument("--video_file", help="local video path here", default=None, type=str, required=False)
+    parser.add_argument("--audio_file", help="local audio path here", default=None, type=str, required=False)
+    # parser.add_argument("--srt_file", help="srt file input path here", default=None, type=str, required=False) # Deprecated
+    # parser.add_argument("--continue", help="task_id that need to continue", default=None, type=str, required=False) # need implement
+    parser.add_argument("--launch_cfg", help="launch config path", default='./configs/local_launch.yaml', type=str, required=False)
+    parser.add_argument("--task_cfg", help="task config path", default='./configs/task_config.yaml', type=str, required=False)
+    args = parser.parse_args()
+
+    return args
+
+if __name__ == "__main__":
+    # read args and configs
+    args = parse_args()
+    launch_cfg = load(open(args.launch_cfg), Loader=Loader)
+    task_cfg = load(open(args.task_cfg), Loader=Loader)
+
+    # initialize dir
+    local_dir = Path(launch_cfg['local_dump'])
+    if not local_dir.exists():
+        local_dir.mkdir(parents=False, exist_ok=False)
+
+    # get task id
+    task_id = str(uuid4())
+
+    # create locak dir for the task
+    task_dir = local_dir.joinpath(f"task_{task_id}")
+    task_dir.mkdir(parents=False, exist_ok=False)
+    task_dir.joinpath("results").mkdir(parents=False, exist_ok=False)
+
+    # logging setting
+    logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+    logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
+        logging.FileHandler(
+            "{}/{}_{}.log".format(task_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
+            'w', encoding='utf-8')])
+
+    # Task create
+    if args.link is not None:
+        try:
+            task = Task.fromYoutubeLink(args.link, task_id, task_dir, task_cfg)
+        except:
+            shutil.rmtree(task_dir)
+            raise RuntimeError("failed to create task from youtube link")
+    elif args.video_file is not None:
+        try:
+            task = Task.fromVideoFile(args.video_file, task_id, task_dir, task_cfg)
+        except:
+            shutil.rmtree(task_dir)
+            raise RuntimeError("failed to create task from youtube link")
+    elif args.audio_file is not None:
+        try:
+            task = Task.fromVideoFile(args.audio_file, task_id, task_dir, task_cfg)
+        except:
+            shutil.rmtree(task_dir)
+            raise RuntimeError("failed to create task from youtube link")
+
+    # add task to the status queue
+    task.run()
+
+
+
+
+    
+
+    
+    
+
+    
