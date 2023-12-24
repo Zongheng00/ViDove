@@ -3,7 +3,7 @@ import logging
 from time import sleep
 from tqdm import tqdm
 from .LLM_task import LLM_task
-from srt_util.srt import split_script
+from src.srt_util.srt import split_script
 
 
 def get_translation(srt, model, video_name, prompt = None, chunk_size = 1000):
