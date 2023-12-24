@@ -43,13 +43,14 @@ def get_word(term_dict:dict, key:str) -> str:
     word = term_dict[key][randint(0,len(term_dict[key])-1)]
     return word
 
-#demo
-term_dict_sc2 = {}
-with open("./finetune_data/dict_enzh.csv", 'r', encoding='utf-8') as f:
-    update_dict_csv(term_dict_sc2,f)
-
-with open("../test.csv", "w", encoding='utf-8') as w:
-    export_csv_dict(term_dict_sc2,w)
+# #demo
+# if __name__ == "__main__":
+#     term_dict_sc2 = {}
+#     with open("./finetune_data/dict_enzh.csv", 'r', encoding='utf-8') as f:
+#         update_dict_csv(term_dict_sc2,f)
+    
+#     with open("../test.csv", "w", encoding='utf-8') as w:
+#         export_csv_dict(term_dict_sc2,w)
 
 ## for load pickle, just:
 # pickle.load(f)
