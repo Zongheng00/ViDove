@@ -463,18 +463,14 @@ class SrtScript(object):
                                 i + 1))
                         logging.info("source text becomes: " + seg.source_text)
 
-    comp_dict = []
 
     def fetchfunc(self, word, threshold):
         import enchant
         result = word
         distance = 0
         threshold = threshold * len(word)
-        if len(self.comp_dict) == 0:
-            with open("./finetune_data/dict_freq.txt", 'r', encoding='utf-8') as f:
-                self.comp_dict = {rows[0]: 1 for rows in reader(f)}
         temp = ""
-        for matched in self.comp_dict:
+        for matched in self.dict:
             if (" " in matched and " " in word) or (" " not in matched and " " not in word):
                 if enchant.utils.levenshtein(word, matched) < enchant.utils.levenshtein(word, temp):
                     temp = matched
@@ -503,14 +499,13 @@ class SrtScript(object):
 
         import enchant
         dict = enchant.Dict('en_US')
-        term_spellDict = enchant.PyPWL('./finetune_data/dict_freq.txt')
 
         for seg in tqdm(self.segments):
             ready_words = self.extract_words(seg.source_text, 2)
             for i in range(len(ready_words)):
                 word_list = ready_words[i]
                 word, real_word, pos = self.get_real_word(word_list)
-                if not dict.check(real_word) and not term_spellDict.check(real_word):
+                if not dict.check(real_word) and (real_word not in self.dict.keys()):
                     distance, correct_term = self.fetchfunc(real_word, 0.3)
                     if distance != 0:
                         seg.source_text = re.sub(word[:pos], correct_term, seg.source_text, flags=re.IGNORECASE)
