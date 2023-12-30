@@ -18,7 +18,7 @@
   <p align="center">
     Transcribe and Translate Your Video with a Single Click
     <br />
-    <a href="https://github.com/project-kxkg/ViDove"><strong>Offical Website »</strong></a>
+    <a href="https://pigeonai.club/"><strong>Offical Website »</strong></a>
     <br />
     <br />
     <a href="https://huggingface.co/spaces/StarPigeon/ViDove">Try Demo</a>
