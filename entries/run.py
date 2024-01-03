@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("--link", help="youtube video link here", default=None, type=str, required=False)
     parser.add_argument("--video_file", help="local video path here", default=None, type=str, required=False)
     parser.add_argument("--audio_file", help="local audio path here", default=None, type=str, required=False)
-    # parser.add_argument("--srt_file", help="srt file input path here", default=None, type=str, required=False) # Deprecated
+    parser.add_argument("--srt_file", help="srt file input path here", default=None, type=str, required=False) # Deprecated
     # parser.add_argument("--continue", help="task_id that need to continue", default=None, type=str, required=False) # need implement
     parser.add_argument("--launch_cfg", help="launch config path", default='./configs/local_launch.yaml', type=str, required=False)
     parser.add_argument("--task_cfg", help="task config path", default='./configs/task_config.yaml', type=str, required=False)
@@ -49,12 +49,12 @@ if __name__ == "__main__":
     task_dir.mkdir(parents=False, exist_ok=False)
     task_dir.joinpath("results").mkdir(parents=False, exist_ok=False)
 
-    # logging setting
-    logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
-        logging.FileHandler(
-            "{}/{}_{}.log".format(task_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
-            'w', encoding='utf-8')])
+    # # logging setting
+    # logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+    # logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
+    #     logging.FileHandler(
+    #         "{}/{}_{}.log".format(task_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
+    #         'w', encoding='utf-8')])
 
     # Task create
     if args.link is not None:
@@ -68,13 +68,19 @@ if __name__ == "__main__":
             task = Task.fromVideoFile(args.video_file, task_id, task_dir, task_cfg)
         except:
             shutil.rmtree(task_dir)
-            raise RuntimeError("failed to create task from youtube link")
+            raise RuntimeError("failed to create task from video file")
     elif args.audio_file is not None:
         try:
             task = Task.fromVideoFile(args.audio_file, task_id, task_dir, task_cfg)
         except:
             shutil.rmtree(task_dir)
-            raise RuntimeError("failed to create task from youtube link")
+            raise RuntimeError("failed to create task from audio file")
+    elif args.srt_file is not None:
+        try:
+            task = Task.fromSRTFile(args.srt_file, task_id, task_dir, task_cfg)
+        except:
+            shutil.rmtree(task_dir)
+            raise RuntimeError("failed to create task from srt file")
 
     # add task to the status queue
     task.run()

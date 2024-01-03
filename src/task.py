@@ -16,6 +16,7 @@ from src.translators.translation import get_translation, prompt_selector
 import torch
 import stable_whisper
 import shutil
+from datetime import datetime
 
 class TaskStatus(str, Enum):
     """
@@ -77,7 +78,15 @@ class Task:
         self.result = None
         self.s_t = None
         self.t_e = None
+        self.t_s = time()
 
+        # logging setting
+        logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
+        logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
+            logging.FileHandler(
+                "{}/{}_{}.log".format(task_local_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
+                'w', encoding='utf-8')])
+                
         print(f"Task ID: {self.task_id}")
         logging.info(f"Task ID: {self.task_id}")
         logging.info(f"{self.source_lang} -> {self.target_lang} task in {self.field}")
@@ -105,7 +114,6 @@ class Task:
         """
         Creates an AudioTask instance from an audio file path.
         """
-        # get audio path
         logging.info("Task Creation method: Audio File")
         return AudioTask(task_id, task_dir, task_cfg, audio_path)
     
@@ -114,9 +122,16 @@ class Task:
         """
         Creates a VideoTask instance from a video file path.
         """
-        # get audio path
         logging.info("Task Creation method: Video File")
         return VideoTask(task_id, task_dir, task_cfg, video_path)
+    
+    @staticmethod
+    def fromSRTFile(srt_path, task_id, task_dir, task_cfg):
+        """
+        Creates a SRTTask instance from a srt file path.
+        """
+        logging.info("Task Creation method: SRT File")
+        return SRTTask(task_id, task_dir, task_cfg, srt_path)
     
     # Module 1 ASR: audio --> SRT_script
     def get_srt_class(self):
@@ -126,7 +141,9 @@ class Task:
         # Instead of using the script_en variable directly, we'll use script_input
         # TODO: setup ASR module like translator
         self.status = TaskStatus.INITIALIZING_ASR
-        self.t_s = time()
+        if self.SRT_Script != None:
+            logging.info("SRT input mode, skip ASR Module")
+            return
 
         method = self.ASR_setting["whisper_config"]["method"]
         whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
@@ -317,7 +334,6 @@ class VideoTask(Task):
         super().__init__(task_id, task_local_dir, task_cfg)
         # TODO: check video format {.mp4}
         new_video_path = f"{task_local_dir}/task_{self.task_id}.mp4"
-        print(new_video_path)
         logging.info(f"Copy video file to: {new_video_path}")
         shutil.copyfile(video_path, new_video_path)
         self.video_path = new_video_path
@@ -332,5 +348,22 @@ class VideoTask(Task):
         self.audio_path = self.task_local_dir.joinpath(f"task_{self.task_id}.mp3")
         logging.info(f" Video File Dir: {self.video_path}")
         logging.info(f" Audio File Dir: {self.audio_path}")
+        logging.info("Data Prep Complete. Start pipeline")
+        super().run_pipeline()
+
+class SRTTask(Task):
+    def __init__(self, task_id, task_local_dir, task_cfg, srt_path):
+        super().__init__(task_id, task_local_dir, task_cfg)
+        self.audio_path = None
+        self.video_path = None
+        new_srt_path = f"{task_local_dir}/task_{self.task_id}_{self.source_lang}.srt"
+        logging.info(f"Copy video file to: {new_srt_path}")
+        shutil.copyfile(srt_path, new_srt_path)
+        self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, srt_path)
+        # print(self.SRT_Script.get_source_only())
+
+    def run(self):
+        logging.info(f"Video File Dir: {self.video_path}")
+        logging.info(f"Audio File Dir: {self.audio_path}")
         logging.info("Data Prep Complete. Start pipeline")
         super().run_pipeline()

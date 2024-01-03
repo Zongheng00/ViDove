@@ -29,7 +29,7 @@ def fileopen(input_file):
     return [srt_src, enc]
 
 
-def srt2ass(input_file,sub_style, is_split, split_method):
+def srt2ass(input_file, sub_style, is_split, split_method):
     if '.ass' in input_file:
         return input_file
 

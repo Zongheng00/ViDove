@@ -7,6 +7,7 @@ from src.srt_util.srt import split_script
 
 
 def get_translation(srt, model, video_name, prompt = None, chunk_size = 1000):
+    # print(srt.get_source_only())
     script_arr, range_arr = split_script(srt.get_source_only(),chunk_size)
     translate(srt, script_arr, range_arr, model, video_name, task=prompt)
     pass
@@ -89,4 +90,6 @@ def translate(srt, script_arr, range_arr, model_name, video_name=None, attempts_
                 sleep(30)
                 flag = True
 
+        logging.info(f"source text: {sentence}")
+        logging.info(f"translate text: {translate}")
         srt.set_translation(translate, range_, model_name, video_name)

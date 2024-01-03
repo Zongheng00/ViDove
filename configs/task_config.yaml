@@ -1,6 +1,6 @@
 # configuration for each task
-source_lang: EN
-target_lang: ZH
+source_lang: ZH
+target_lang: EN
 field: General
 
 # ASR config
@@ -12,18 +12,18 @@ ASR:
   
 # pre-process module config
 pre_process: 
-  sentence_form: True
+  sentence_form: False
   spell_check: False
-  term_correct: True
+  term_correct: False
 
 # Translation module config
 translation:
   model: gpt-4
-  chunk_size: 1000
+  chunk_size: 100
 
 # post-process module config
 post_process: 
-  check_len_and_split: True
+  check_len_and_split: False
   remove_trans_punctuation: True
 
 # output type that user receive

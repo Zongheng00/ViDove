@@ -49,18 +49,20 @@ def init(output_type, src_lang, tgt_lang, domain):
     task_dir.mkdir(parents=False, exist_ok=False)
     task_dir.joinpath("results").mkdir(parents=False, exist_ok=False)
 
-    # logging setting
-    logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
-        logging.FileHandler(
-            "{}/{}_{}.log".format(task_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
-            'w', encoding='utf-8')])
     return task_id, task_dir, task_cfg
 
-def process_input(video_file, youtube_link, src_lang, tgt_lang, domain, output_type):
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, output_type):
     task_id, task_dir, task_cfg = init(output_type, src_lang, tgt_lang, domain)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
+        task.run()
+        return task.result
+    elif audio_file is not None:
+        task = Task.fromAudioFile(audio_file.name, task_id, task_dir, task_cfg)
+        task.run()
+        return task.result
+    elif srt_file is not None:
+        task = Task.fromSRTFile(srt_file.name, task_id, task_dir, task_cfg)
         task.run()
         return task.result
     elif video_file is not None:
@@ -73,6 +75,8 @@ def process_input(video_file, youtube_link, src_lang, tgt_lang, domain, output_t
 demo = gr.Interface(fn=process_input,
     inputs=[
         gr.components.Video(label="Upload a video"),
+        gr.File(label="Or upload an Audio File"),
+        gr.File(label="Or upload a SRT file"),
         gr.components.Textbox(label="Or enter a YouTube URL"), 
         gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language"),
         gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language"),
@@ -80,7 +84,7 @@ demo = gr.Interface(fn=process_input,
         gr.CheckboxGroup(["Video File", "Bilingual", ".ass output"], label="Output Settings", info="What do you want?"),
     ],
     outputs=[
-        gr.components.Video(label="Processed Video")
+        gr.components.File(label="Output")
     ],
     title="ViDove: video translation toolkit demo",
     description="Upload a video or enter a YouTube URL."
