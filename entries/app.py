@@ -72,23 +72,33 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
     else:
         return None
 
-demo = gr.Interface(fn=process_input,
-    inputs=[
-        gr.components.Video(label="Upload a video"),
-        gr.File(label="Or upload an Audio File"),
-        gr.File(label="Or upload a SRT file"),
-        gr.components.Textbox(label="Or enter a YouTube URL"), 
-        gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language"),
-        gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language"),
-        gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain"),
-        gr.CheckboxGroup(["Video File", "Bilingual", ".ass output"], label="Output Settings", info="What do you want?"),
-    ],
-    outputs=[
-        gr.components.File(label="Output")
-    ],
-    title="ViDove: video translation toolkit demo",
-    description="Upload a video or enter a YouTube URL."
-    )
+
+with gr.Blocks() as demo:
+    gr.Markdown("# ViDove: video translation toolkit demo")
+    gr.Markdown("Our website: https://pigeonai.club/")
+    gr.Markdown("Github: https://github.com/pigeonai-org/ViDove")
+    gr.Markdown("Please give us a star on GitHub!")
+    gr.Markdown("### Input")
+    with gr.Tab("Youtube Link"):
+        link = gr.components.Textbox(label="Enter a YouTube URL")
+    with gr.Tab("Video File"):
+        video = gr.components.Video(label="Upload a video")
+    with gr.Tab("Audio File"):
+        audio = gr.File(label="Upload an Audio File")
+    with gr.Tab("SRT File"):
+        srt = gr.File(label="Upload a SRT file")
+
+    gr.Markdown("### Input Setting")
+    with gr.Row():
+        opt_src = gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language")
+        opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language")
+        opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain")
+    opt_out = gr.CheckboxGroup(["Video File", "Bilingual", ".ass output"], label="Output Settings", info="What do you want?")
+    submit_button = gr.Button("Submit")
+
+    gr.Markdown("### Output")
+    file_output = gr.components.File(label="Output")
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_out], outputs=file_output)
 
 if __name__ == "__main__":
     demo.launch()
