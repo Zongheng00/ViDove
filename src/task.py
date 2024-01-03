@@ -148,7 +148,7 @@ class Task:
             # extract script from audio
             logging.info("extract script from audio")
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+            logging.info(f"Module 1: ASR inference method: {method}")
             if method == "api":
                 with open(self.audio_path, 'rb') as audio_file:
                     transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt")
@@ -167,6 +167,8 @@ class Task:
                 transcript = transcript['segments']
                 # after get the transcript, release the gpu resource
                 torch.cuda.empty_cache()
+            else:
+                raise RuntimeError(f"unavaliable ASR inference method: {method}")
         if isinstance(transcript, str):
             self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
         else:

@@ -12,7 +12,7 @@ from uuid import uuid4
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
 
-def init(output_type, src_lang, tgt_lang, domain):
+def init(output_type, src_lang, tgt_lang, domain, api):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
@@ -20,6 +20,7 @@ def init(output_type, src_lang, tgt_lang, domain):
     task_cfg["source_lang"] = src_lang
     task_cfg["target_lang"] = tgt_lang
     task_cfg["field"] = domain
+    task_cfg["ASR"]["whisper_config"]["method"] = api
 
     if "Video File" in output_type:
         task_cfg["output_type"]["video"] = True
@@ -51,8 +52,8 @@ def init(output_type, src_lang, tgt_lang, domain):
 
     return task_id, task_dir, task_cfg
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, output_type):
-    task_id, task_dir, task_cfg = init(output_type, src_lang, tgt_lang, domain)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, output_type):
+    task_id, task_dir, task_cfg = init(output_type, src_lang, tgt_lang, domain, api)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run()
@@ -74,7 +75,7 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("# ViDove: video translation toolkit demo")
+    gr.Markdown("# ViDove V0.1.0: Pigeon AI Video Translation Toolkit Demo")
     gr.Markdown("Our website: https://pigeonai.club/")
     gr.Markdown("Github: https://github.com/pigeonai-org/ViDove")
     gr.Markdown("Please give us a star on GitHub!")
@@ -93,12 +94,13 @@ with gr.Blocks() as demo:
         opt_src = gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language")
         opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language")
         opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain")
+        opt_api = gr.components.Dropdown(choices=["api", "stable"], label="Select ASR Module Inference Method")
     opt_out = gr.CheckboxGroup(["Video File", "Bilingual", ".ass output"], label="Output Settings", info="What do you want?")
     submit_button = gr.Button("Submit")
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_out], outputs=file_output)
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_out], outputs=file_output)
 
 if __name__ == "__main__":
     demo.launch()
