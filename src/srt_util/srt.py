@@ -171,9 +171,15 @@ class SrtScript(object):
 
 
     @classmethod
-    def parse_from_srt_file(cls, src_lang, tgt_lang, path: str):
-        with open(path, 'r', encoding="utf-8") as f:
-            script_lines = [line.rstrip() for line in f.readlines()]
+    def parse_from_srt_file(cls, src_lang, tgt_lang, domain, path = None, srt_str = None):
+        if path is not None:
+            with open(path, 'r', encoding="utf-8") as f:
+                script_lines = [line.rstrip() for line in f.readlines()]
+        elif srt_str is not None:
+            script_lines = srt_str.splitlines()
+        else:
+            raise RuntimeError("need input Srt Path or Srt String")
+
         bilingual = False
         if script_lines[2] != '' and script_lines[3] != '':
             bilingual = True
@@ -184,8 +190,7 @@ class SrtScript(object):
         else:
             for i in range(0, len(script_lines), 4):
                 segments.append(list(script_lines[i:i + 4]))
-
-        return cls(src_lang, tgt_lang, segments)
+        return cls(src_lang, tgt_lang, segments, domain)
 
     def merge_segs(self, idx_list) -> SrtSegment:
         """

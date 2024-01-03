@@ -86,7 +86,7 @@ class Task:
             logging.FileHandler(
                 "{}/{}_{}.log".format(task_local_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
                 'w', encoding='utf-8')])
-                
+
         print(f"Task ID: {self.task_id}")
         logging.info(f"Task ID: {self.task_id}")
         logging.info(f"{self.source_lang} -> {self.target_lang} task in {self.field}")
@@ -106,7 +106,6 @@ class Task:
         """
         Creates a YoutubeTask instance from a YouTube URL.
         """
-        logging.info("Task Creation method: Youtube Link")
         return YoutubeTask(task_id, task_dir, task_cfg, youtube_url)
 
     @staticmethod
@@ -114,7 +113,6 @@ class Task:
         """
         Creates an AudioTask instance from an audio file path.
         """
-        logging.info("Task Creation method: Audio File")
         return AudioTask(task_id, task_dir, task_cfg, audio_path)
     
     @staticmethod
@@ -122,7 +120,6 @@ class Task:
         """
         Creates a VideoTask instance from a video file path.
         """
-        logging.info("Task Creation method: Video File")
         return VideoTask(task_id, task_dir, task_cfg, video_path)
     
     @staticmethod
@@ -130,7 +127,6 @@ class Task:
         """
         Creates a SRTTask instance from a srt file path.
         """
-        logging.info("Task Creation method: SRT File")
         return SRTTask(task_id, task_dir, task_cfg, srt_path)
     
     # Module 1 ASR: audio --> SRT_script
@@ -168,11 +164,13 @@ class Task:
                     .split_by_punctuation(['.', '。', '?'])
                 )
                 transcript = transcript.to_dict()
-            
-            # after get the transcript, release the gpu resource
-            torch.cuda.empty_cache()
-
-        self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript['segments'], self.field)
+                transcript = transcript['segments']
+                # after get the transcript, release the gpu resource
+                torch.cuda.empty_cache()
+        if isinstance(transcript, str):
+            self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
+        else:
+            self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript, self.field)
         # save the srt script to local
         self.SRT_Script.write_srt_file_src(src_srt_path)
 
@@ -285,6 +283,7 @@ class Task:
 class YoutubeTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, youtube_url):
         super().__init__(task_id, task_local_dir, task_cfg)
+        logging.info("Task Creation method: Youtube Link")
         self.youtube_url = youtube_url
 
     def run(self):
@@ -320,6 +319,7 @@ class AudioTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, audio_path):
         super().__init__(task_id, task_local_dir, task_cfg)
         # TODO: check audio format
+        logging.info("Task Creation method: Audio File")
         self.audio_path = audio_path
         self.video_path = None
 
@@ -333,6 +333,7 @@ class VideoTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, video_path):
         super().__init__(task_id, task_local_dir, task_cfg)
         # TODO: check video format {.mp4}
+        logging.info("Task Creation method: Video File")
         new_video_path = f"{task_local_dir}/task_{self.task_id}.mp4"
         logging.info(f"Copy video file to: {new_video_path}")
         shutil.copyfile(video_path, new_video_path)
@@ -354,13 +355,13 @@ class VideoTask(Task):
 class SRTTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, srt_path):
         super().__init__(task_id, task_local_dir, task_cfg)
+        logging.info("Task Creation method: SRT File")
         self.audio_path = None
         self.video_path = None
         new_srt_path = f"{task_local_dir}/task_{self.task_id}_{self.source_lang}.srt"
         logging.info(f"Copy video file to: {new_srt_path}")
         shutil.copyfile(srt_path, new_srt_path)
-        self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, srt_path)
-        # print(self.SRT_Script.get_source_only())
+        self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain=self.field, path=srt_path)
 
     def run(self):
         logging.info(f"Video File Dir: {self.video_path}")
