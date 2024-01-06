@@ -18,7 +18,7 @@ pre_process:
 
 # Translation module config
 translation:
-  model: gpt-4
+  model: gpt-4-1106-preview
   chunk_size: 1000
 
 # post-process module config

@@ -11,7 +11,7 @@ def LLM_task(model_name, input, task, temp = 0.15):
     :param task: Prompt.
     :param temp: Model temperature.
     """
-    if model_name == "gpt-3.5-turbo" or model_name == "gpt-4":
+    if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]:
         response = openai.ChatCompletion.create(
             model=model_name,
             messages=[

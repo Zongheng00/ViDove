@@ -12,7 +12,7 @@ from uuid import uuid4
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
 
-def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, opt_model_size):
+def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
@@ -22,6 +22,7 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_
     task_cfg["field"] = domain
     task_cfg["ASR"]["whisper_config"]["method"] = api
     task_cfg["ASR"]["whisper_config"]["whisper_model"] = opt_model_size
+    task_cfg["translation"]["model"] = translation_model
 
     if "Video File" in output_type:
         task_cfg["output_type"]["video"] = True
@@ -61,8 +62,8 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_
 
     return task_id, task_dir, task_cfg
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, opt_post, opt_pre, output_type, chunk_size, opt_model_size):
-    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, opt_model_size)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, opt_post, opt_pre, output_type, chunk_size, translation_model, opt_model_size):
+    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run()
@@ -112,6 +113,7 @@ with gr.Blocks() as demo:
     with gr.Tab("Post-process"):
         opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
     with gr.Tab("Translation"):
+        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"], label="Select Translation Model", value="gpt-4-1106-preview")
         chunk_size = gr.Number(value=1000, info="100 for ZH as source language")
     
     opt_out = gr.CheckboxGroup(["Bilingual"], label="Output Settings", info="What do you want?")
@@ -120,15 +122,11 @@ with gr.Blocks() as demo:
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_post, opt_pre, opt_out, chunk_size, opt_model_size], outputs=file_output)
-    def clear():
-        file_output.clear()
-        link.clear()
-        video.clear()
-        audio.clear()
-        srt.clear(0)
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_post, opt_pre, opt_out, chunk_size, translation_model, opt_model_size], outputs=file_output)
+    # def clear():
+    #     file_output.clear()
 
-    clear_btn = gr.Button(value="Clear")
-    clear_btn.click(clear, [], [])
+    # clear_btn = gr.Button(value="Clear")
+    # clear_btn.click(clear, [], [])
 if __name__ == "__main__":
     demo.launch()
