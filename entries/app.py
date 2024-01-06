@@ -121,6 +121,14 @@ with gr.Blocks() as demo:
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
     submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_post, opt_pre, opt_out, chunk_size, opt_model_size], outputs=file_output)
+    def clear():
+        file_output.clear()
+        link.clear()
+        video.clear()
+        audio.clear()
+        srt.clear(0)
 
+    clear_btn = gr.Button(value="Clear")
+    clear_btn.click(clear, [], [])
 if __name__ == "__main__":
     demo.launch()
