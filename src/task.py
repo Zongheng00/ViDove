@@ -149,13 +149,14 @@ class Task:
             logging.info("extract script from audio")
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             logging.info(f"Module 1: ASR inference method: {method}")
+            init_prompt = "Hello, welcome to my lecture." if self.source_lang == "EN" else ""
             if method == "api":
                 with open(self.audio_path, 'rb') as audio_file:
-                    transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt")
+                    transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=self.source_lang.lower(), prompt=init_prompt)
             elif method == "stable":
                 model = stable_whisper.load_model(whisper_model, device)
                 transcript = model.transcribe(str(self.audio_path), regroup=False,
-                                                  initial_prompt="Hello, welcome to my lecture. Are you good my friend?")
+                                                  initial_prompt=init_prompt)
                 (
                     transcript
                     .split_by_punctuation(['.', '。', '?'])

@@ -7,14 +7,14 @@ field: General
 ASR:
   ASR_model: whisper
   whisper_config:
-    whisper_model: tiny
+    whisper_model: medium
     method: stable
   
 # pre-process module config
 pre_process: 
-  sentence_form: False
+  sentence_form: True
   spell_check: False
-  term_correct: False
+  term_correct: True
 
 # Translation module config
 translation:
@@ -23,7 +23,7 @@ translation:
 
 # post-process module config
 post_process: 
-  check_len_and_split: False
+  check_len_and_split: True
   remove_trans_punctuation: True
 
 # output type that user receive

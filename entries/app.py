@@ -12,7 +12,7 @@ from uuid import uuid4
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
 
-def init(output_type, src_lang, tgt_lang, domain, api):
+def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, opt_model_size):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
@@ -21,6 +21,7 @@ def init(output_type, src_lang, tgt_lang, domain, api):
     task_cfg["target_lang"] = tgt_lang
     task_cfg["field"] = domain
     task_cfg["ASR"]["whisper_config"]["method"] = api
+    task_cfg["ASR"]["whisper_config"]["whisper_model"] = opt_model_size
 
     if "Video File" in output_type:
         task_cfg["output_type"]["video"] = True
@@ -37,6 +38,14 @@ def init(output_type, src_lang, tgt_lang, domain, api):
     else:
         task_cfg["output_type"]["subtitle"] = "srt"
 
+    task_cfg["pre_process"]["sentence_form"] = True if "Sentence form" in opt_pre else False
+    task_cfg["pre_process"]["spell_check"] = True if "Spell Check" in opt_pre else False
+    task_cfg["pre_process"]["term_correct"] = True if "Term Correct" in opt_pre else False
+
+    task_cfg["post_process"]["check_len_and_split"] = True if "Split Sentence" in opt_post else False
+    task_cfg["post_process"]["remove_trans_punctuation"] = True if "Remove Punc" in opt_post else False
+
+    task_cfg["translation"]["chunk_size"] = chunk_size
     # initialize dir
     local_dir = Path(launch_cfg['local_dump'])
     if not local_dir.exists():
@@ -52,8 +61,8 @@ def init(output_type, src_lang, tgt_lang, domain, api):
 
     return task_id, task_dir, task_cfg
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, output_type):
-    task_id, task_dir, task_cfg = init(output_type, src_lang, tgt_lang, domain, api)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, opt_post, opt_pre, output_type, chunk_size, opt_model_size):
+    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, opt_model_size)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run()
@@ -74,6 +83,7 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
         return None
 
 
+
 with gr.Blocks() as demo:
     gr.Markdown("# ViDove V0.1.0: Pigeon AI Video Translation Toolkit Demo")
     gr.Markdown("Our website: https://pigeonai.club/")
@@ -89,18 +99,28 @@ with gr.Blocks() as demo:
     with gr.Tab("SRT File"):
         srt = gr.File(label="Upload a SRT file")
 
-    gr.Markdown("### Input Setting")
+    gr.Markdown("### Settings")
     with gr.Row():
-        opt_src = gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language")
-        opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language")
-        opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain")
-        opt_api = gr.components.Dropdown(choices=["api", "stable"], label="Select ASR Module Inference Method")
-    opt_out = gr.CheckboxGroup(["Video File", "Bilingual", ".ass output"], label="Output Settings", info="What do you want?")
+        opt_src = gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language", value="EN")
+        opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language", value="ZH")
+        opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
+    with gr.Tab("ASR"):
+        opt_api = gr.components.Dropdown(choices=["api", "stable"], label="Select ASR Module Inference Method", value="stable", info="use api if you don't have GPU")
+        opt_model_size = gr.components.Dropdown(choices=["base", "medium", "large"], label="Select model size", value="large", info="Only for \"stable\" method, large size need 8GB GPU Memory", visible=True)
+    with gr.Tab("Pre-process"):
+        opt_pre = gr.CheckboxGroup(["Sentence form", "Spell Check", "Term Correct"], label="Pre-process Module", info="Pre-process module settings", value=["Sentence form", 'Term Correct'])
+    with gr.Tab("Post-process"):
+        opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
+    with gr.Tab("Translation"):
+        chunk_size = gr.Number(value=1000, info="100 for ZH as source language")
+    
+    opt_out = gr.CheckboxGroup(["Bilingual"], label="Output Settings", info="What do you want?")
+
     submit_button = gr.Button("Submit")
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_out], outputs=file_output)
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_post, opt_pre, opt_out, chunk_size, opt_model_size], outputs=file_output)
 
 if __name__ == "__main__":
     demo.launch()
