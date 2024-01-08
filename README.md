@@ -93,6 +93,8 @@ Here's why:
 <!-- GETTING STARTED -->
 ## Getting Started
 
+**We recommend you use UNIX like operating systems(MacOS/Linux Family) for local installation.**
+
 ### Installation
 
 1. Get a OpenAI API Key at [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
@@ -109,9 +111,24 @@ Here's why:
    pip install -r requirements.txt
    ```
 4. Enter your API in bash
-   ```js
+   UNIX Like:
+
+   ```sh
    export OPENAI_API_KEY="your_api_key" 
    ```
+
+   Windows:
+   ```sh
+   set OPENAI_API_KEY="your_api_key" 
+   ```
+5. Install FFmpeg:
+6. 
+   [here](https://ffmpeg.org/)
+
+   For windows user:
+
+   We recommand you use [Chocolatey Package Manager](https://chocolatey.org/) to install ffmpeg
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
