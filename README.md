@@ -111,6 +111,7 @@ Here's why:
    pip install -r requirements.txt
    ```
 4. Enter your API in bash
+   
    UNIX Like:
 
    ```sh
@@ -122,7 +123,7 @@ Here's why:
    set OPENAI_API_KEY="your_api_key" 
    ```
 5. Install FFmpeg:
-6. 
+
    [here](https://ffmpeg.org/)
 
    For windows user:
