@@ -129,4 +129,5 @@ with gr.Blocks() as demo:
     # clear_btn = gr.Button(value="Clear")
     # clear_btn.click(clear, [], [])
 if __name__ == "__main__":
+    demo.queue(max_size=1)
     demo.launch()
