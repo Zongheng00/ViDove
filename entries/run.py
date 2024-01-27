@@ -84,13 +84,3 @@ if __name__ == "__main__":
 
     # add task to the status queue
     task.run()
-
-
-
-
-    
-
-    
-    
-
-    
