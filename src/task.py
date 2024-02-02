@@ -261,7 +261,7 @@ class Task:
         self.translation()
         self.postprocess()
         self.result = self.output_render()
-        # print(self.result)
+        print(self.result)
 
 class YoutubeTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, youtube_url):
