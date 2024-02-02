@@ -8,9 +8,14 @@ from pathlib import Path
 from datetime import datetime
 import shutil
 from uuid import uuid4
+import torch
+import stable_whisper
 
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = stable_whisper.load_model("large", device)
 
 def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size):
     launch_cfg = load(open(launch_config), Loader=Loader)
@@ -66,11 +71,11 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
     task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
-        task.run()
+        task.run(model)
         return task.result
     elif audio_file is not None:
         task = Task.fromAudioFile(audio_file.name, task_id, task_dir, task_cfg)
-        task.run()
+        task.runmodel()
         return task.result
     elif srt_file is not None:
         task = Task.fromSRTFile(srt_file.name, task_id, task_dir, task_cfg)
@@ -78,7 +83,7 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
         return task.result
     elif video_file is not None:
         task = Task.fromVideoFile(video_file, task_id, task_dir, task_cfg)
-        task.run()
+        task.run(model)
         return task.result
     else:
         return None
@@ -129,5 +134,5 @@ with gr.Blocks() as demo:
     # clear_btn = gr.Button(value="Clear")
     # clear_btn.click(clear, [], [])
 if __name__ == "__main__":
-    demo.queue(max_size=1)
-    demo.launch()
+    demo.queue(max_size=5)
+    demo.launch(server_name="0.0.0.0")
