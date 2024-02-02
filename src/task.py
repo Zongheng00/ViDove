@@ -141,14 +141,15 @@ class Task:
         if self.SRT_Script != None:
             logging.info("SRT input mode, skip ASR Module")
             return
-        
+        # get configs
         method = self.ASR_setting["whisper_config"]["method"]
         whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
         src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
 
+        # get transcript
         transcript = get_transcript(method, whisper_model, src_srt_path, self.source_lang, self.audio_path)
 
-        if transcript != None:
+        if transcript != None:  # if the audio is transfered
             if isinstance(transcript, str):
                 self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
             else:
