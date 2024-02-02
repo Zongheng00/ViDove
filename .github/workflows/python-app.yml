@@ -9,13 +9,16 @@ on:
 jobs:
     test:
         runs-on: ubuntu-latest
+        env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         steps:
             - uses: actions/checkout@v4
 
             - name: Set up python 3.10
               uses: actions/setup-python@v3
               with:
-                  python-version: 3.10
+                  python-version: "3.10"
+                  architecture: "x64"
             
             - name: Install dependencies
               run: |
@@ -51,7 +54,7 @@ jobs:
               id: meta
               uses: docker/metadata-action@v3
               with:
-                  images: 'vidove/vidove'
+                  images: 'johojakusha/vidove'
 
             - name: Build and push Docker image
               uses: docker/build-push-action@v2
@@ -61,4 +64,6 @@ jobs:
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+                  build-args: |
+                      OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
