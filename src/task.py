@@ -12,7 +12,7 @@ from src.srt_util.srt import SrtScript
 from src.srt_util.srt2ass import srt2ass
 from time import time, strftime, gmtime, sleep
 from src.translators.translation import get_translation, prompt_selector
-from src.ASR import get_transcript
+from src.ASR.ASR import get_transcript
 
 # import torch
 # import stable_whisper
