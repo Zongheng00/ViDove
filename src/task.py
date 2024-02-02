@@ -12,7 +12,7 @@ from src.srt_util.srt import SrtScript
 from src.srt_util.srt2ass import srt2ass
 from time import time, strftime, gmtime, sleep
 from src.translators.translation import get_translation, prompt_selector
-from src.ASR import get_ASR
+from src.ASR import get_transcript
 
 import torch
 import stable_whisper
@@ -146,9 +146,7 @@ class Task:
         whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
         src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
 
-        transcript = get_ASR(method, whisper_model, src_srt_path, self.source_lang, self.audio_path)
-        
-        # def get_ASR(method, whisper_model, src_srt_path, source_lang, audio_path):
+        transcript = get_transcript(method, whisper_model, src_srt_path, self.source_lang, self.audio_path)
 
         if transcript != None:
             if isinstance(transcript, str):
