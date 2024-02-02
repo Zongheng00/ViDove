@@ -75,7 +75,7 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
         return task.result
     elif audio_file is not None:
         task = Task.fromAudioFile(audio_file.name, task_id, task_dir, task_cfg)
-        task.runmodel()
+        task.run(model)
         return task.result
     elif srt_file is not None:
         task = Task.fromSRTFile(srt_file.name, task_id, task_dir, task_cfg)
