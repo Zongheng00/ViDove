@@ -14,8 +14,6 @@ from time import time, strftime, gmtime, sleep
 from src.translators.translation import get_translation, prompt_selector
 from src.ASR.ASR import get_transcript
 
-# import torch
-# import stable_whisper
 import shutil
 from datetime import datetime
 

@@ -1,23 +1,9 @@
-# import threading
-# import time
-
 import openai
-# from pytube import YouTube
-# from os import getenv, getcwd
 from pathlib import Path
-# from enum import Enum, auto
 
 import logging
-# import subprocess
-# from src.srt_util.srt import SrtScript
-# from src.srt_util.srt2ass import srt2ass
-# from time import time, strftime, gmtime, sleep
-# from src.translators.translation import get_translation, prompt_selector
-
 import torch
 import stable_whisper
-# import shutil
-# from datetime import datetime
 
 def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path):
 
