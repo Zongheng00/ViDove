@@ -12,7 +12,7 @@ import logging
 # from src.srt_util.srt import SrtScript
 # from src.srt_util.srt2ass import srt2ass
 # from time import time, strftime, gmtime, sleep
-from src.translators.translation import get_translation, prompt_selector
+# from src.translators.translation import get_translation, prompt_selector
 
 import torch
 import stable_whisper
@@ -31,11 +31,11 @@ def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path)
 
         # process the audio by method
         if method == "api":
-            transcript = get_get_transcript_whisper1(audio_path, source_lang, init_prompt)
+            transcript = get_transcript_whisper1(audio_path, source_lang, init_prompt)
             istrans = True
         elif method == "stable":
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            transcript = get_get_transcript_stable(audio_path, whisper_model, device, init_prompt)
+            transcript = get_transcript_stable(audio_path, whisper_model, device, init_prompt)
             istrans = True
         else:
             raise RuntimeError(f"unavaliable ASR inference method: {method}")   
@@ -46,12 +46,12 @@ def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path)
     else: 
         return None
         
-def get_get_transcript_whisper1(audio_path, source_lang, init_prompt):
+def get_transcript_whisper1(audio_path, source_lang, init_prompt):
     with open(audio_path, 'rb') as audio_file:
         transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=source_lang.lower(), prompt=init_prompt)
     return transcript
     
-def get_get_transcript_stable(audio_path, whisper_model, device, init_prompt):
+def get_transcript_stable(audio_path, whisper_model, device, init_prompt):
     model = stable_whisper.load_model(whisper_model, device)
     transcript = model.transcribe(str(audio_path), regroup=False, initial_prompt=init_prompt)
     (
