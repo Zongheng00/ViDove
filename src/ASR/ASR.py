@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import torch
 import stable_whisper
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path):
 
@@ -16,12 +17,15 @@ def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path)
         init_prompt = "Hello, welcome to my lecture." if source_lang == "EN" else ""
 
         # process the audio by method
-        if method == "api":
+        # TODO: method "api" should be changed to "whisper1" afterwards
+        if method == "api": 
             transcript = get_transcript_whisper1(audio_path, source_lang, init_prompt)
             istrans = True
+        elif method == "whisper-large-v3":
+            transcript = get_transcript_whisper_large_v3(audio_path, whisper_model, device, init_prompt)
+            istrans = True
         elif method == "stable":
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            transcript = get_transcript_stable(audio_path, whisper_model, device, init_prompt)
+            transcript = get_transcript_stable(audio_path, whisper_model, init_prompt)
             istrans = True
         else:
             raise RuntimeError(f"unavaliable ASR inference method: {method}")   
@@ -37,7 +41,8 @@ def get_transcript_whisper1(audio_path, source_lang, init_prompt):
         transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=source_lang.lower(), prompt=init_prompt)
     return transcript
     
-def get_transcript_stable(audio_path, whisper_model, device, init_prompt):
+def get_transcript_stable(audio_path, whisper_model, init_prompt):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = stable_whisper.load_model(whisper_model, device)
     transcript = model.transcribe(str(audio_path), regroup=False, initial_prompt=init_prompt)
     (
@@ -52,4 +57,29 @@ def get_transcript_stable(audio_path, whisper_model, device, init_prompt):
     # after get the transcript, release the gpu resource
     torch.cuda.empty_cache()
 
+    return transcript
+
+def get_transcript_whisper_large_v3(audio_path):
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+    model_id = "openai/whisper-large-v3"
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True)
+    model.to(device)
+
+    processor = AutoProcessor.from_pretrained(model_id)
+    pipe = pipeline(
+    "automatic-speech-recognition",
+    model=model,
+    tokenizer=processor.tokenizer,
+    feature_extractor=processor.feature_extractor,
+    max_new_tokens=128,
+    chunk_length_s=30,
+    batch_size=16,
+    return_timestamps=True,
+    torch_dtype=torch_dtype,
+    device=device,
+    )
+
+    transcript = pipe(audio_path)
     return transcript
