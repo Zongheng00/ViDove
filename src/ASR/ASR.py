@@ -22,7 +22,7 @@ def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path)
             transcript = get_transcript_whisper1(audio_path, source_lang, init_prompt)
             istrans = True
         elif method == "whisper-large-v3":
-            transcript = get_transcript_whisper_large_v3(audio_path, whisper_model, device, init_prompt)
+            transcript = get_transcript_whisper_large_v3(audio_path)
             istrans = True
         elif method == "stable":
             transcript = get_transcript_stable(audio_path, whisper_model, init_prompt)
@@ -64,7 +64,7 @@ def get_transcript_whisper_large_v3(audio_path):
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
     model_id = "openai/whisper-large-v3"
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True)
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype)
     model.to(device)
 
     processor = AutoProcessor.from_pretrained(model_id)
@@ -81,5 +81,12 @@ def get_transcript_whisper_large_v3(audio_path):
     device=device,
     )
 
-    transcript = pipe(audio_path)
+    transcript_whisper_v3 = pipe(str(audio_path))
+    # transcript_whisper_v3 = transcript_whisper_v3
+
+    # convert format
+    transcript = []
+    for i in transcript_whisper_v3['chunks']:
+        transcript.append({'start': i['timestamp'][0], 'end': i['timestamp'][1], 'text':i['text']})
+
     return transcript

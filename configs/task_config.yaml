@@ -8,7 +8,7 @@ ASR:
   ASR_model: whisper
   whisper_config:
     whisper_model: medium
-    method: stable
+    method: stable # whisper-large-v3
   
 # pre-process module config
 pre_process: 
