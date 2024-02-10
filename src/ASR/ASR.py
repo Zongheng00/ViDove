@@ -82,7 +82,6 @@ def get_transcript_whisper_large_v3(audio_path):
     )
 
     transcript_whisper_v3 = pipe(str(audio_path))
-    # transcript_whisper_v3 = transcript_whisper_v3
 
     # convert format
     transcript = []
