@@ -35,6 +35,7 @@ def prompt_selector(src_lang, tgt_lang, domain):
         "RU": "Russian",
         "JA": "Japanese",
         "AR": "Arabic",
+        "KR": "Korean",
     }
     try:
         src_lang = language_map[src_lang]

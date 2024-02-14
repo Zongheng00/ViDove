@@ -51,6 +51,11 @@ punctuation_dict = {
         "comma": "، ",
         "sentence_end": [".", "!", "?", ";", "؟"]
     },
+    "KR": {
+        "punc_str": ".,?!:;()[]{}",
+        "comma": ", ",
+        "sentence_end": [".", "!", "?", ";"]
+    }
 }
 
 dict_path = "./domain_dict"
