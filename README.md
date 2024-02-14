@@ -126,9 +126,9 @@ Here's why:
 
    [here](https://ffmpeg.org/)
 
-   For windows user:
+   For more specfic guide on FFmpeg installation on different platforms: [Click Here](\doc\ffmpeg_guide_en.md) | [点击此处](\doc\ffmpeg_guide_zh.md)
 
-   We recommand you use [Chocolatey Package Manager](https://chocolatey.org/) to install ffmpeg
+   ~~We recommand you use [Chocolatey Package Manager](https://chocolatey.org/) to install ffmpeg~~
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -7,9 +7,9 @@
 ## WINDOWS用户： 🪟
 
 ### 第一步: 下载FFMPEG
-注意：我们建议仅通过 **官方源** 下载FFMPEG： [点这里] (https://ffmpeg.org/download.html#build-windows), <br>
+注意：我们建议仅通过 **官方源** 下载FFMPEG： [**FFMPEG官网**](https://ffmpeg.org/download.html#build-windows), <br>
 
-或访问 [这里] (https://github.com/BtbN/FFmpeg-Builds/releases) 下载最新的稳定版本
+或访问 [**BtbN GitHub页面**](https://github.com/BtbN/FFmpeg-Builds/releases) 下载最新的稳定版本
 
 ### 第二步: 解压FFMPEG文件
 在您偏好的目录解压.7z包。 <br>

@@ -7,9 +7,9 @@ This process involves downloading the FFmpeg binaries and adding them to your sy
 ## For WINDOWS Users 🪟
 
 ### Step 1: Download FFMPEG
-NOTE: We recommend downloading FFMPEG from **official sources ONLY** by visiting **[here]** (https://ffmpeg.org/download.html#build-windows), <br>
+NOTE: We recommend downloading FFMPEG from **official sources ONLY** by visiting [**here**](https://ffmpeg.org/download.html#build-windows), <br>
 
-or by visiting **[here]** (https://github.com/BtbN/FFmpeg-Builds/releases) for the latest stable releases. 
+or by visiting [**here**](https://github.com/BtbN/FFmpeg-Builds/releases) for the latest stable releases. 
 
 ### Step 2: Extract FFMPEG file
 Unzip the .7z package at the directory you prefer. <br>
