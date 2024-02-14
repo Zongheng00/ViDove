@@ -16,11 +16,15 @@
 
 注意：如果您下载了.tar.xz文件，您可以通过**Windows Powershell**运行以下命令来解压tar文件：<br>
 
-```tar -xf yourfile.tar.xz```<br>
+```sh
+tar -xf yourfile.tar.xz
+```
 
 如果上面的行运行失败，可能是因为**tar**版本过旧，无法识别XZ压缩。您可以添加"**-J**"标志来解决问题。 <br>
 
-```tar -xJf yourfile.tar.xz```<br>
+```sh
+tar -xJf yourfile.tar.xz
+```
 
 ### 第三步: 设置环境变量
 在Windows搜索栏搜索 "**环境变量**"，并选择"**编辑系统环境变量**". <br>
@@ -47,26 +51,36 @@
 ### 第一步: 安装Homebrew（如果Homebrew**未安装**）
 将以下命令粘贴到您的终端并按回车。此命令也可以在[Homebrew网站] (https://brew.sh/)上找到：<br>
 
-```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"``` <br>
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
 按照屏幕上的指示完成安装。<br>
 
 ### 第二部: 安装FFMPEG
 安装Homebrew后，您现在可以通过在终端运行以下命令来安装FFmpeg：<br>
 
-```brew install ffmpeg```<br>
+```sh
+brew install ffmpeg
+```
 
 若需个性化安装，您可以通过运行以下命令查看可用选项
 
-```brew options ffmpeg```<br>
+```sh
+brew options ffmpeg
+```
 
 示例：带有选项的安装（libvpx编解码器和libvorbis音频编码器）:
-```brew install ffmpeg --with-libvpx --with-libvorbis```<br>
+```sh
+brew install ffmpeg --with-libvpx --with-libvorbis
+```
 
 ### 第三步: 验证您的安装
 安装过程完成后，您可以通过运行以下命令来验证FFmpeg是否成功安装：<br>
 
-```ffmpeg -version``` <br>
+```sh
+ffmpeg -version
+```
 
 <br>
 
@@ -77,16 +91,22 @@
 ### 第一步: 更新包列表
 在您的终端运行以下命令以确保您有更新的包列表<br>
 
-```sudo apt update``` <br>
+```sh
+sudo apt update
+```
 
 ### 第二步：安装FFMPEG
 包列表更新后可以通过运行以下命令安装FFmpeg:
-```sudo apt install ffmpeg```<br>
+```sh
+sudo apt install ffmpeg
+```
 
 ### 第三步: 验证您的安装
 安装过程完成后，您可以通过运行以下命令来验证FFmpeg是否成功安装：<br>
 
-```ffmpeg -version``` <br>
+```sh
+ffmpeg -version
+```
 
 <br>
 
