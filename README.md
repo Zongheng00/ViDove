@@ -124,7 +124,7 @@ Here's why:
    ```
 5. Install FFmpeg:
 
-   [here](https://ffmpeg.org/)
+   Download FFmpeg [here](https://ffmpeg.org/)
 
    For more specfic guide on FFmpeg installation on different platforms: [Click Here](\doc\ffmpeg_guide_en.md) | [点击此处](\doc\ffmpeg_guide_zh.md)
 
