@@ -126,7 +126,7 @@ Here's why:
 
    Download FFmpeg [here](https://ffmpeg.org/)
 
-   For more specfic guide on FFmpeg installation on different platforms: [Click Here](\doc\ffmpeg_guide_en.md) | [点击此处](\doc\ffmpeg_guide_zh.md)
+   For more specfic guide on FFmpeg installation on different platforms: [Click Here](doc/ffmpeg_guide_en.md) | [点击此处](doc/ffmpeg_guide_zh.md)
 
    ~~We recommand you use [Chocolatey Package Manager](https://chocolatey.org/) to install ffmpeg~~
 
