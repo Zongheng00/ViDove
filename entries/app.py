@@ -107,8 +107,8 @@ with gr.Blocks() as demo:
 
     gr.Markdown("### Settings")
     with gr.Row():
-        opt_src = gr.components.Dropdown(choices=["EN", "ZH"], label="Select Source Language", value="EN")
-        opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language", value="ZH")
+        opt_src = gr.components.Dropdown(choices=["EN", "ZH", "KR"], label="Select Source Language", value="EN")
+        opt_tgt = gr.components.Dropdown(choices=["ZH", "EN", "KR"], label="Select Target Language", value="ZH")
         opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
     with gr.Tab("ASR"):
         opt_api = gr.components.Dropdown(choices=["api", "stable"], label="Select ASR Module Inference Method", value="stable", info="use api if you don't have GPU")

@@ -19,6 +19,7 @@ def init_evaluator(source_lang="en", target_lang="zh", domain="startcraft2", mod
     language_map = {
         "en": "English",
         "zh": "Chinese",
+        "kr": "Korean",
     }
 
     llm = ChatOpenAI(temperature=0, model=model)
