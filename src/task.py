@@ -195,7 +195,7 @@ class Task:
         """
         logging.info("---------------------Start Translation--------------------")
         prompt = prompt_selector(self.source_lang, self.target_lang, self.field)
-        get_translation(self.SRT_Script, self.translation_model, self.task_id, prompt, self.translation_setting['chunk_size'])
+        get_translation(self.SRT_Script, self.translation_model, self.task_id, prompt, self.translation_setting['chunk_size'], is_assistand=True)
     
     # Module 4: perform srt post process steps
     def postprocess(self):

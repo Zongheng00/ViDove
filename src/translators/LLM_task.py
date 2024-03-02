@@ -1,18 +1,16 @@
-
-import openai
-
-
-def LLM_task(model_name, input, task, temp = 0.15):
+def LLM_task(model_name, input, task, client, temp = 0.15):
     """
     Translates input sentence with desired LLM.
 
     :param model_name: The name of the translation model to be used.
     :param input: Sentence for translation.
     :param task: Prompt.
+    :param client: OpenAI client.
     :param temp: Model temperature.
     """
+
     if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model_name,
             messages=[
                 {"role": "system","content": task},
@@ -20,7 +18,7 @@ def LLM_task(model_name, input, task, temp = 0.15):
             ],
             temperature=temp
         )
-        return response['choices'][0]['message']['content'].strip()
+        return response.choices[0].message.content.strip()
     # Other LLM not implemented
     else:
         raise NotImplementedError

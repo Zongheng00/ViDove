@@ -1,15 +1,30 @@
 from os import getenv
+import traceback
 import logging
+from openai import OpenAI
 from time import sleep
 from tqdm import tqdm
 from .LLM_task import LLM_task
+from .assistant_task import Assistant_task
 from src.srt_util.srt import split_script
 
 
-def get_translation(srt, model, video_name, prompt = None, chunk_size = 1000):
+def get_translation(srt, model, video_name, prompt = None, chunk_size = 1000, is_assistand = False):
     # print(srt.get_source_only())
     script_arr, range_arr = split_script(srt.get_source_only(),chunk_size)
-    translate(srt, script_arr, range_arr, model, video_name, task=prompt)
+    client = OpenAI()
+
+    if is_assistand:
+        # for the testing purpose, fix the assistant id
+        assistant_id = "asst_v1cEwYXexhfmkPEYtISyIjYI"
+        print("Assistant mode is on")
+        thread_id = client.beta.threads.create().id
+        # print(f"Thread ID: {thread_id}")
+        logging.info(f"Thread ID: {thread_id}")
+        translate(srt, script_arr, range_arr, model, client, video_name, task=prompt, thread_id=thread_id, assistant_id=assistant_id)
+
+    else:
+        translate(srt, script_arr, range_arr, model, client, video_name, task=prompt)
     pass
 
 def check_translation(sentence, translation):
@@ -50,7 +65,7 @@ def prompt_selector(src_lang, tgt_lang, domain):
         """
     return prompt
 
-def translate(srt, script_arr, range_arr, model_name, video_name=None, attempts_count=5, task=None, temp = 0.15):
+def translate(srt, script_arr, range_arr, model_name, client, video_name=None, attempts_count=5, task=None, temp = 0.15, thread_id=None, assistant_id=None):
     """
     Translates the given script array into another language using the chatgpt and writes to the SRT file.
 
@@ -84,8 +99,13 @@ def translate(srt, script_arr, range_arr, model_name, video_name=None, attempts_
         while flag:
             flag = False
             try:
-                translate = LLM_task(model_name, sentence, task, temp)
+                if thread_id:
+                    translate = Assistant_task(sentence, task, client, thread_id, assistant_id,temp)
+                else:
+                    translate = LLM_task(model_name, sentence, task, client, temp)
             except Exception as e:
+                print("An error has occurred during translation:", e)
+                print(traceback.format_exc())
                 logging.debug("An error has occurred during translation:", e)
                 logging.info("Retrying... the script will continue after 30 seconds.")
                 sleep(30)
