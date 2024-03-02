@@ -49,13 +49,6 @@ if __name__ == "__main__":
     task_dir.mkdir(parents=False, exist_ok=False)
     task_dir.joinpath("results").mkdir(parents=False, exist_ok=False)
 
-    # # logging setting
-    # logfmt = "%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s"
-    # logging.basicConfig(level=logging.INFO, format=logfmt, handlers=[
-    #     logging.FileHandler(
-    #         "{}/{}_{}.log".format(task_dir, f"task_{task_id}", datetime.now().strftime("%m%d%Y_%H%M%S")),
-    #         'w', encoding='utf-8')])
-
     # Task create
     if args.link is not None:
         try:
@@ -84,13 +77,3 @@ if __name__ == "__main__":
 
     # add task to the status queue
     task.run()
-
-
-
-
-    
-
-    
-    
-
-    

@@ -12,9 +12,8 @@ from src.srt_util.srt import SrtScript
 from src.srt_util.srt2ass import srt2ass
 from time import time, strftime, gmtime, sleep
 from src.translators.translation import get_translation, prompt_selector
+from src.ASR.ASR import get_transcript
 
-import torch
-import stable_whisper
 import shutil
 from datetime import datetime
 
@@ -29,7 +28,6 @@ class TaskStatus(str, Enum):
     TRANSLATING = 'TRANSLATING'
     POST_PROCESSING = 'POST_PROCESSING'
     OUTPUT_MODULE = 'OUTPUT_MODULE'
-
 
 class Task:
     """
@@ -135,47 +133,27 @@ class Task:
         Handles the ASR module to convert audio to SRT script format.
         """
         # Instead of using the script_en variable directly, we'll use script_input
-        # TODO: setup ASR module like translator
         self.status = TaskStatus.INITIALIZING_ASR
+
         if self.SRT_Script != None:
             logging.info("SRT input mode, skip ASR Module")
             return
-
-        method = self.ASR_setting["whisper_config"]["method"]
-        whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
+        # get configs
+        # shoud be modified after we incorporate more ASR methods
+        method = self.ASR_setting["ASR_model"]
+        # whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
         src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
-        if not Path.exists(src_srt_path):
-            # extract script from audio
-            logging.info("extract script from audio")
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            logging.info(f"Module 1: ASR inference method: {method}")
-            init_prompt = "Hello, welcome to my lecture." if self.source_lang == "EN" else ""
-            if method == "api":
-                with open(self.audio_path, 'rb') as audio_file:
-                    transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=self.source_lang.lower(), prompt=init_prompt)
-            elif method == "stable":
-                model = stable_whisper.load_model(whisper_model, device)
-                transcript = model.transcribe(str(self.audio_path), regroup=False,
-                                                  initial_prompt=init_prompt)
-                (
-                    transcript
-                    .split_by_punctuation(['.', '。', '?'])
-                    .merge_by_gap(.15, max_words=3)
-                    .merge_by_punctuation([' '])
-                    .split_by_punctuation(['.', '。', '?'])
-                )
-                transcript = transcript.to_dict()
-                transcript = transcript['segments']
-                # after get the transcript, release the gpu resource
-                torch.cuda.empty_cache()
+
+        # get transcript
+        transcript = get_transcript(method, src_srt_path, self.source_lang, self.audio_path)
+
+        if transcript != None:  # if the audio is transfered
+            if isinstance(transcript, str):
+                self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
             else:
-                raise RuntimeError(f"unavaliable ASR inference method: {method}")
-        if isinstance(transcript, str):
-            self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
-        else:
-            self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript, self.field)
-        # save the srt script to local
-        self.SRT_Script.write_srt_file_src(src_srt_path)
+                self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript, self.field)
+            # save the srt script to local
+            self.SRT_Script.write_srt_file_src(src_srt_path)
 
     # Module 1 ASR: audio --> SRT_script
     def get_srt_class_gradio(self, model):
@@ -341,7 +319,7 @@ class Task:
         self.translation()
         self.postprocess()
         self.result = self.output_render()
-        # print(self.result)
+        print(self.result)
 
 class YoutubeTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, youtube_url):

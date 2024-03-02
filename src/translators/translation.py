@@ -94,3 +94,4 @@ def translate(srt, script_arr, range_arr, model_name, video_name=None, attempts_
         logging.info(f"source text: {sentence}")
         logging.info(f"translate text: {translate}")
         srt.set_translation(translate, range_, model_name, video_name)
+        
