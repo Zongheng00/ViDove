@@ -128,7 +128,7 @@ class Task:
         return SRTTask(task_id, task_dir, task_cfg, srt_path)
     
     # Module 1 ASR: audio --> SRT_script
-    def get_srt_class(self):
+    def get_srt_class(self, pre_load_asr_model = None):
         """
         Handles the ASR module to convert audio to SRT script format.
         """
@@ -145,7 +145,7 @@ class Task:
         src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
 
         # get transcript
-        transcript = get_transcript(method, src_srt_path, self.source_lang, self.audio_path)
+        transcript = get_transcript(method, src_srt_path, self.source_lang, self.audio_path, pre_load_asr_model)
 
         if transcript != None:  # if the audio is transfered
             if isinstance(transcript, str):
@@ -154,54 +154,9 @@ class Task:
                 self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript, self.field)
             # save the srt script to local
             self.SRT_Script.write_srt_file_src(src_srt_path)
-
-    # Module 1 ASR: audio --> SRT_script
-    def get_srt_class_gradio(self, model):
-        """
-        Handles the ASR module to convert audio to SRT script format.
-        """
-        # Instead of using the script_en variable directly, we'll use script_input
-        # TODO: setup ASR module like translator
-        self.status = TaskStatus.INITIALIZING_ASR
-        if self.SRT_Script != None:
-            logging.info("SRT input mode, skip ASR Module")
-            return
-
-        method = self.ASR_setting["whisper_config"]["method"]
-        whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
-        src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
-        if not Path.exists(src_srt_path):
-            # extract script from audio
-            logging.info("extract script from audio")
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            logging.info(f"Module 1: ASR inference method: {method}")
-            init_prompt = "Hello, welcome to my lecture." if self.source_lang == "EN" else ""
-            if method == "api":
-                with open(self.audio_path, 'rb') as audio_file:
-                    transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=self.source_lang.lower(), prompt=init_prompt)
-            elif method == "stable":
-                transcript = model.transcribe(str(self.audio_path), regroup=False,
-                                                  initial_prompt=init_prompt)
-                (
-                    transcript
-                    .split_by_punctuation(['.', '。', '?'])
-                    .merge_by_gap(.15, max_words=3)
-                    .merge_by_punctuation([' '])
-                    .split_by_punctuation(['.', '。', '?'])
-                )
-                transcript = transcript.to_dict()
-                transcript = transcript['segments']
-                # after get the transcript, release the gpu resource
-                torch.cuda.empty_cache()
-            else:
-                raise RuntimeError(f"unavaliable ASR inference method: {method}")
-        if isinstance(transcript, str):
-            self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain = self.field, srt_str = transcript.rstrip())
         else:
-            self.SRT_Script = SrtScript(self.source_lang, self.target_lang, transcript, self.field)
-        # save the srt script to local
-        self.SRT_Script.write_srt_file_src(src_srt_path)
-
+            raise RuntimeError(f"Failed to get transcript from audio file: {self.audio_path}")
+        
     # Module 2: SRT preprocess: perform preprocess steps
     def preprocess(self):
         """
@@ -296,30 +251,17 @@ class Task:
         logging.info(
             "Pipeline finished, time duration:{}".format(strftime("%H:%M:%S", gmtime(self.t_e - self.t_s))))
         return final_res
-
-    def run_pipeline_gradio(self, model):
-        """
-        Executes the entire pipeline process for the task.
-        """
-        # if running in gradio deployment, 
-        # self.get_srt_class()
-        self.get_srt_class_gradio(model)
-        self.preprocess()
-        self.translation()
-        self.postprocess()
-        self.result = self.output_render()
     
-    def run_pipeline(self, model):
+    def run_pipeline(self, pre_load_asr_model = None):
         """
         Executes the entire pipeline process for the task.
         """
-        # if running in gradio deployment, 
-        self.get_srt_class()
+        self.get_srt_class(pre_load_asr_model)
         self.preprocess()
         self.translation()
         self.postprocess()
         self.result = self.output_render()
-        print(self.result)
+        # print(self.result)
 
 class YoutubeTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, youtube_url):
@@ -328,7 +270,7 @@ class YoutubeTask(Task):
         self.youtube_url = youtube_url
         # self.model = model
 
-    def run(self, model):
+    def run(self, pre_load_asr_model = None):
         yt = YouTube(self.youtube_url)
         video = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
 
@@ -355,7 +297,7 @@ class YoutubeTask(Task):
         logging.info(f" Audio File Dir: {self.audio_path}")
         logging.info(" Data Prep Complete. Start pipeline")
 
-        super().run_pipeline_gradio(model)
+        super().run_pipeline(pre_load_asr_model)
 
 class AudioTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, audio_path):
@@ -365,11 +307,11 @@ class AudioTask(Task):
         self.audio_path = audio_path
         self.video_path = None
 
-    def run(self, model):
+    def run(self, pre_load_asr_model = None):
         logging.info(f"Video File Dir: {self.video_path}")
         logging.info(f"Audio File Dir: {self.audio_path}")
         logging.info("Data Prep Complete. Start pipeline")
-        super().run_pipeline_gradio(model)
+        super().run_pipeline(pre_load_asr_model)
 
 class VideoTask(Task):
     def __init__(self, task_id, task_local_dir, task_cfg, video_path):
@@ -381,7 +323,7 @@ class VideoTask(Task):
         shutil.copyfile(video_path, new_video_path)
         self.video_path = new_video_path
 
-    def run(self, model):
+    def run(self, pre_load_asr_model = None):
         logging.info("using ffmpeg to extract audio")
         subprocess.run(
                 ['ffmpeg', '-i', self.video_path, '-f', 'mp3',
@@ -392,10 +334,10 @@ class VideoTask(Task):
         logging.info(f" Video File Dir: {self.video_path}")
         logging.info(f" Audio File Dir: {self.audio_path}")
         logging.info("Data Prep Complete. Start pipeline")
-        super().run_pipeline_gradio(model)
+        super().run_pipeline(pre_load_asr_model)
 
 class SRTTask(Task):
-    def __init__(self, task_id, task_local_dir, task_cfg, srt_path, model):
+    def __init__(self, task_id, task_local_dir, task_cfg, srt_path):
         super().__init__(task_id, task_local_dir, task_cfg)
         logging.info("Task Creation method: SRT File")
         self.audio_path = None

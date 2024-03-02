@@ -14,8 +14,10 @@ import stable_whisper
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
 
+
+model_dict = {"stable_large": None, "stable_medium": None, "stable_base": None}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = stable_whisper.load_model("large", device)
+
 def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
@@ -29,6 +31,23 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
     task_cfg["target_lang"] = tgt_lang
     task_cfg["field"] = domain
     task_cfg["ASR"]["ASR_model"] = opt_asr_method
+
+    # ASR model pre-load
+    pre_load_asr_model = None
+    if opt_asr_method == "stable-whisper-base":
+        if model_dict["stable_base"] is None:
+            model_dict["stable_base"] = stable_whisper.load_model("base", device)
+        pre_load_asr_model = model_dict["stable_base"]
+    elif opt_asr_method == "stable-whisper-medium":
+        if model_dict["stable_medium"] is None:
+            model_dict["stable_medium"] = stable_whisper.load_model("medium", device)
+        pre_load_asr_model = model_dict["stable_medium"]
+    elif opt_asr_method == "stable-whisper-large":
+        if model_dict["stable_large"] is None:
+            model_dict["stable_large"] = stable_whisper.load_model("large", device)
+        pre_load_asr_model = model_dict["stable_large"]
+
+
     task_cfg["translation"]["model"] = translation_model
 
     if "Video File" in output_type:
@@ -67,17 +86,17 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
     task_dir.mkdir(parents=False, exist_ok=False)
     task_dir.joinpath("results").mkdir(parents=False, exist_ok=False)
 
-    return task_id, task_dir, task_cfg
+    return task_id, task_dir, task_cfg, pre_load_asr_model
 
 def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
-    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
+    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
-        task.run(model)
+        task.run(pre_load_asr_model)
         return task.result
     elif audio_file is not None:
         task = Task.fromAudioFile(audio_file.name, task_id, task_dir, task_cfg)
-        task.run(model)
+        task.run(pre_load_asr_model)
         return task.result
     elif srt_file is not None:
         task = Task.fromSRTFile(srt_file.name, task_id, task_dir, task_cfg)
@@ -85,7 +104,7 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
         return task.result
     elif video_file is not None:
         task = Task.fromVideoFile(video_file, task_id, task_dir, task_cfg)
-        task.run(model)
+        task.run(pre_load_asr_model)
         return task.result
     else:
         return None
@@ -113,7 +132,7 @@ with gr.Blocks() as demo:
         opt_tgt = gr.components.Dropdown(choices=["ZH", "EN", "KR"], label="Select Target Language", value="ZH")
         opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
     with gr.Tab("ASR"):
-        opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "whisper-large-v3", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="whisper-api", info="use api if you don't have GPU")
+        opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="whisper-api", info="use api if you don't have GPU")
         # opt_model_size = gr.components.Dropdown(choices=["base", "medium", "large"], label="Select model size", value="large", info="Only for \"stable\" method, large size need 8GB GPU Memory", visible=True)
     with gr.Tab("Pre-process"):
         opt_pre = gr.CheckboxGroup(["Sentence form", "Spell Check", "Term Correct"], label="Pre-process Module", info="Pre-process module settings", value=["Sentence form", 'Term Correct'])

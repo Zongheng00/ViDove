@@ -6,7 +6,7 @@ import torch
 import stable_whisper
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-def get_transcript(method, src_srt_path, source_lang, audio_path):
+def get_transcript(method, src_srt_path, source_lang, audio_path, pre_load_asr_model = None):
 
     is_trans = False # is trans flag 
 
@@ -17,16 +17,15 @@ def get_transcript(method, src_srt_path, source_lang, audio_path):
         init_prompt = "Hello, welcome to my lecture." if source_lang == "EN" else ""
 
         # process the audio by method
-        # TODO: method "api" should be changed to "whisper1" afterwards
         if method == "whisper-api": 
             transcript = get_transcript_whisper_api(audio_path, source_lang, init_prompt)
             is_trans = True
         elif method == "whisper-large-v3":
-            transcript = get_transcript_whisper_large_v3(audio_path)
+            transcript = get_transcript_whisper_large_v3(audio_path, pre_load_asr_model)
             is_trans = True
         elif "stable" in method:
             whisper_model = method.split("-")[2]
-            transcript = get_transcript_stable(audio_path, whisper_model, init_prompt)
+            transcript = get_transcript_stable(audio_path, whisper_model, init_prompt, pre_load_asr_model)
             is_trans = True
         else:
             raise RuntimeError(f"unavaliable ASR inference method: {method}")   
@@ -42,9 +41,12 @@ def get_transcript_whisper_api(audio_path, source_lang, init_prompt):
         transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=source_lang.lower(), prompt=init_prompt)
     return transcript
     
-def get_transcript_stable(audio_path, whisper_model, init_prompt):
+def get_transcript_stable(audio_path, whisper_model, init_prompt, pre_load_asr_model = None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = stable_whisper.load_model(whisper_model, device)
+    if pre_load_asr_model is not None:
+        model = pre_load_asr_model
+    else:
+        model = stable_whisper.load_model(whisper_model, device)
     transcript = model.transcribe(str(audio_path), regroup=False, initial_prompt=init_prompt)
     (
         transcript
@@ -60,12 +62,16 @@ def get_transcript_stable(audio_path, whisper_model, init_prompt):
 
     return transcript
 
-def get_transcript_whisper_large_v3(audio_path):
+def get_transcript_whisper_large_v3(audio_path, pre_load_asr_model = None):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
     model_id = "openai/whisper-large-v3"
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype)
+
+    if pre_load_asr_model is not None:
+        model = pre_load_asr_model
+    else:
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype)
+    
     model.to(device)
 
     processor = AutoProcessor.from_pretrained(model_id)
