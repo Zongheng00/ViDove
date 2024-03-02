@@ -6,9 +6,9 @@ import torch
 import stable_whisper
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path):
+def get_transcript(method, src_srt_path, source_lang, audio_path):
 
-    istrans = False # is trans flag 
+    is_trans = False # is trans flag 
 
     if not Path.exists(src_srt_path):
         # extract script from audio
@@ -18,25 +18,26 @@ def get_transcript(method, whisper_model, src_srt_path, source_lang, audio_path)
 
         # process the audio by method
         # TODO: method "api" should be changed to "whisper1" afterwards
-        if method == "api": 
-            transcript = get_transcript_whisper1(audio_path, source_lang, init_prompt)
-            istrans = True
+        if method == "whisper-api": 
+            transcript = get_transcript_whisper_api(audio_path, source_lang, init_prompt)
+            is_trans = True
         elif method == "whisper-large-v3":
             transcript = get_transcript_whisper_large_v3(audio_path)
-            istrans = True
-        elif method == "stable":
+            is_trans = True
+        elif "stable" in method:
+            whisper_model = method.split("-")[2]
             transcript = get_transcript_stable(audio_path, whisper_model, init_prompt)
-            istrans = True
+            is_trans = True
         else:
             raise RuntimeError(f"unavaliable ASR inference method: {method}")   
     
     # return transcript or None
-    if (istrans == True):
+    if (is_trans == True):
         return transcript    
     else: 
         return None
         
-def get_transcript_whisper1(audio_path, source_lang, init_prompt):
+def get_transcript_whisper_api(audio_path, source_lang, init_prompt):
     with open(audio_path, 'rb') as audio_file:
         transcript = openai.Audio.transcribe(model="whisper-1", file=audio_file, response_format="srt", language=source_lang.lower(), prompt=init_prompt)
     return transcript

@@ -5,10 +5,7 @@ field: General
 
 # ASR config
 ASR:
-  ASR_model: whisper
-  whisper_config:
-    whisper_model: medium
-    method: stable # whisper-large-v3
+  ASR_model: whisper-api # whisper-large-v3, stable-whisper-base, stable-whisper-medium, stable-whisper-large
   
 # pre-process module config
 pre_process: 

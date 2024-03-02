@@ -133,19 +133,19 @@ class Task:
         Handles the ASR module to convert audio to SRT script format.
         """
         # Instead of using the script_en variable directly, we'll use script_input
-        # TODO: setup ASR module like translator
         self.status = TaskStatus.INITIALIZING_ASR
 
         if self.SRT_Script != None:
             logging.info("SRT input mode, skip ASR Module")
             return
         # get configs
-        method = self.ASR_setting["whisper_config"]["method"]
-        whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
+        # shoud be modified after we incorporate more ASR methods
+        method = self.ASR_setting["ASR_model"]
+        # whisper_model = self.ASR_setting["whisper_config"]["whisper_model"]
         src_srt_path = self.task_local_dir.joinpath(f"task_{self.task_id}_{self.source_lang}.srt")
 
         # get transcript
-        transcript = get_transcript(method, whisper_model, src_srt_path, self.source_lang, self.audio_path)
+        transcript = get_transcript(method, src_srt_path, self.source_lang, self.audio_path)
 
         if transcript != None:  # if the audio is transfered
             if isinstance(transcript, str):

@@ -12,16 +12,19 @@ from uuid import uuid4
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
 
-def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size):
+def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
     # overwrite config file
     task_cfg["source_lang"] = src_lang
+    if src_lang == "ZH":
+        task_cfg["translation"]["chunk_size"] = 100
+        # auto set the chunk size for ZH input
+        
     task_cfg["target_lang"] = tgt_lang
     task_cfg["field"] = domain
-    task_cfg["ASR"]["whisper_config"]["method"] = api
-    task_cfg["ASR"]["whisper_config"]["whisper_model"] = opt_model_size
+    task_cfg["ASR"]["ASR_model"] = opt_asr_method
     task_cfg["translation"]["model"] = translation_model
 
     if "Video File" in output_type:
@@ -62,8 +65,8 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_
 
     return task_id, task_dir, task_cfg
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, api, opt_post, opt_pre, output_type, chunk_size, translation_model, opt_model_size):
-    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, api, chunk_size, translation_model, opt_model_size)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
+    task_id, task_dir, task_cfg = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run()
@@ -106,8 +109,8 @@ with gr.Blocks() as demo:
         opt_tgt = gr.components.Dropdown(choices=["ZH", "EN"], label="Select Target Language", value="ZH")
         opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
     with gr.Tab("ASR"):
-        opt_api = gr.components.Dropdown(choices=["api", "stable"], label="Select ASR Module Inference Method", value="stable", info="use api if you don't have GPU")
-        opt_model_size = gr.components.Dropdown(choices=["base", "medium", "large"], label="Select model size", value="large", info="Only for \"stable\" method, large size need 8GB GPU Memory", visible=True)
+        opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "whisper-large-v3", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="whisper-api", info="use api if you don't have GPU")
+        # opt_model_size = gr.components.Dropdown(choices=["base", "medium", "large"], label="Select model size", value="large", info="Only for \"stable\" method, large size need 8GB GPU Memory", visible=True)
     with gr.Tab("Pre-process"):
         opt_pre = gr.CheckboxGroup(["Sentence form", "Spell Check", "Term Correct"], label="Pre-process Module", info="Pre-process module settings", value=["Sentence form", 'Term Correct'])
     with gr.Tab("Post-process"):
@@ -122,7 +125,7 @@ with gr.Blocks() as demo:
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_api, opt_post, opt_pre, opt_out, chunk_size, translation_model, opt_model_size], outputs=file_output)
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=file_output)
     # def clear():
     #     file_output.clear()
 
