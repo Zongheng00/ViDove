@@ -53,6 +53,11 @@ if __name__ == "__main__":
     # add is_assistant to task_cfg
     task_cfg["is_assistant"] = args.is_assistant
 
+    # disable spell check and term correct for assistant mode
+    if args.is_assistant:
+        task_cfg["pre_process"]["spell_check"] = False
+        task_cfg["pre_process"]["term_correct"] = False
+
     # Task create
     if args.link is not None:
         try:
