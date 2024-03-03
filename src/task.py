@@ -70,6 +70,8 @@ class Task:
         self.field = task_cfg["field"]
         self.pre_setting = task_cfg["pre_process"]
         self.post_setting = task_cfg["post_process"]
+
+        self.is_assistant = True if task_cfg["is_assistant"] else False
         
         self.audio_path = None
         self.SRT_Script = None
@@ -195,7 +197,7 @@ class Task:
         """
         logging.info("---------------------Start Translation--------------------")
         prompt = prompt_selector(self.source_lang, self.target_lang, self.field)
-        get_translation(self.SRT_Script, self.translation_model, self.task_id, prompt, self.translation_setting['chunk_size'], is_assistand=True)
+        get_translation(self.SRT_Script, self.translation_model, self.task_id, prompt, self.translation_setting['chunk_size'], is_assistand=self.is_assistant)
     
     # Module 4: perform srt post process steps
     def postprocess(self):

@@ -17,7 +17,7 @@ def Assistant_task(input, task, client, thread_id, assistant_id, temp = 0.15):
     thread_message = client.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
-        content= task + "/n" + input
+        content= task  + "/n" + input
     )
 
     run = client.beta.threads.runs.create(
@@ -25,7 +25,7 @@ def Assistant_task(input, task, client, thread_id, assistant_id, temp = 0.15):
         assistant_id=assistant_id,
     )
 
-    print("sending message to assistant")
+    # print("sending message to assistant")
 
     run = wait_on_run(client, run, thread_id)
 
@@ -35,10 +35,7 @@ def Assistant_task(input, task, client, thread_id, assistant_id, temp = 0.15):
         thread_id=thread_id, order="asc", after=thread_message.id
     ).data
 
-    # print(messages)
-    # messages = messages.data
-
-    print(messages[0].content[0].text.value.strip())
+    # print(messages[0].content[0].text.value.strip())
 
     return messages[0].content[0].text.value.strip()
 

@@ -18,7 +18,7 @@ task_config = './configs/task_config.yaml'
 model_dict = {"stable_large": None, "stable_medium": None, "stable_base": None}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
+def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model, is_assistant):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
@@ -67,7 +67,11 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
 
     task_cfg["pre_process"]["sentence_form"] = True if "Sentence form" in opt_pre else False
     task_cfg["pre_process"]["spell_check"] = True if "Spell Check" in opt_pre else False
-    task_cfg["pre_process"]["term_correct"] = True if "Term Correct" in opt_pre else False
+    if not is_assistant:
+        task_cfg["pre_process"]["term_correct"] = True if "Term Correct" in opt_pre else False
+        task_cfg["is_assistant"] = False
+    else:
+        task_cfg["is_assistant"] = True
 
     task_cfg["post_process"]["check_len_and_split"] = True if "Split Sentence" in opt_post else False
     task_cfg["post_process"]["remove_trans_punctuation"] = True if "Remove Punc" in opt_post else False
@@ -88,8 +92,8 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
 
     return task_id, task_dir, task_cfg, pre_load_asr_model
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
-    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model, is_assistant):
+    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model, is_assistant)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run(pre_load_asr_model)
@@ -139,6 +143,7 @@ with gr.Blocks() as demo:
     with gr.Tab("Post-process"):
         opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
     with gr.Tab("Translation"):
+        is_assistant = gr.Checkbox(label="Assistant Mode", info="A test assistant built for Star Craft 2", value=False)
         translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"], label="Select Translation Model", value="gpt-4-1106-preview")
         chunk_size = gr.Number(value=1000, info="100 for ZH as source language")
     
@@ -148,7 +153,7 @@ with gr.Blocks() as demo:
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=file_output)
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model, is_assistant], outputs=file_output)
     # def clear():
     #     file_output.clear()
 

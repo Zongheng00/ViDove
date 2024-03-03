@@ -34,7 +34,7 @@ sympy==1.11.1
 tiktoken==0.3.1
 torch==2.0.0
 tqdm==4.65.0
-typing_extensions==4.5.0
+typing_extensions==4.8.0
 transformers
 urllib3==1.26.15
 yarl==1.8.2
