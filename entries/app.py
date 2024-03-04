@@ -18,7 +18,7 @@ task_config = './configs/task_config.yaml'
 model_dict = {"stable_large": None, "stable_medium": None, "stable_base": None}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model, is_assistant):
+def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
 
@@ -47,8 +47,10 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
             model_dict["stable_large"] = stable_whisper.load_model("large", device)
         pre_load_asr_model = model_dict["stable_large"]
 
-
-    task_cfg["translation"]["model"] = translation_model
+    if translation_model == "SC2 Domain Expert(beta test)": 
+        task_cfg["translation"]["model"] = "Assistant"
+    else:
+        task_cfg["translation"]["model"] = translation_model
 
     if "Video File" in output_type:
         task_cfg["output_type"]["video"] = True
@@ -67,11 +69,10 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
 
     task_cfg["pre_process"]["sentence_form"] = True if "Sentence form" in opt_pre else False
     task_cfg["pre_process"]["spell_check"] = True if "Spell Check" in opt_pre else False
-    if not is_assistant:
-        task_cfg["pre_process"]["term_correct"] = True if "Term Correct" in opt_pre else False
-        task_cfg["is_assistant"] = False
-    else:
-        task_cfg["is_assistant"] = True
+
+    if task_cfg["translation"]["model"] == "Assistant":
+        task_cfg["pre_process"]["term_correct"] = False
+        task_cfg["field"] = "SC2"
 
     task_cfg["post_process"]["check_len_and_split"] = True if "Split Sentence" in opt_post else False
     task_cfg["post_process"]["remove_trans_punctuation"] = True if "Remove Punc" in opt_post else False
@@ -92,8 +93,8 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
 
     return task_id, task_dir, task_cfg, pre_load_asr_model
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model, is_assistant):
-    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model, is_assistant)
+def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
+    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run(pre_load_asr_model)
@@ -134,18 +135,23 @@ with gr.Blocks() as demo:
     with gr.Row():
         opt_src = gr.components.Dropdown(choices=["EN", "ZH", "KR"], label="Select Source Language", value="EN")
         opt_tgt = gr.components.Dropdown(choices=["ZH", "EN", "KR"], label="Select Target Language", value="ZH")
+        if opt_src.value == opt_tgt.value:
+            gr.Error("Source and Target Language should be different")
         opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
     with gr.Tab("ASR"):
-        opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="whisper-api", info="use api if you don't have GPU")
-        # opt_model_size = gr.components.Dropdown(choices=["base", "medium", "large"], label="Select model size", value="large", info="Only for \"stable\" method, large size need 8GB GPU Memory", visible=True)
+        if device.type == "cuda":
+            opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="stable-whisper-large", info="use api if you don't have GPU")
+        else:
+            opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "stable-whisper-base", "stable-whisper-medium"], label="Select ASR Module Inference Method", value="whisper-api", info="use api if you don't have GPU")
     with gr.Tab("Pre-process"):
-        opt_pre = gr.CheckboxGroup(["Sentence form", "Spell Check", "Term Correct"], label="Pre-process Module", info="Pre-process module settings", value=["Sentence form", 'Term Correct'])
+        default_pre = ["Sentence form", 'Term Correct'] if opt_src.value == "EN" else []
+        opt_pre = gr.CheckboxGroup(["Sentence form", "Spell Check", "Term Correct"], label="Pre-process Module", info="Pre-process module settings", value=default_pre)
     with gr.Tab("Post-process"):
         opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
     with gr.Tab("Translation"):
-        is_assistant = gr.Checkbox(label="Assistant Mode", info="A test assistant built for Star Craft 2", value=False)
-        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"], label="Select Translation Model", value="gpt-4-1106-preview")
-        chunk_size = gr.Number(value=1000, info="100 for ZH as source language")
+        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview", "SC2 Domain Expert(beta test)"], label="Select Translation Model", value="gpt-4-1106-preview")
+        default_chunksize = 2000 if opt_src.value == "EN" else 100
+        chunk_size = gr.Number(value=default_chunksize, info="100 for ZH as source language")
     
     opt_out = gr.CheckboxGroup(["Bilingual"], label="Output Settings", info="What do you want?")
 
@@ -153,7 +159,8 @@ with gr.Blocks() as demo:
 
     gr.Markdown("### Output")
     file_output = gr.components.File(label="Output")
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model, is_assistant], outputs=file_output)
+
+    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=file_output)
     # def clear():
     #     file_output.clear()
 
