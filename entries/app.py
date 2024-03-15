@@ -156,4 +156,4 @@ with gr.Blocks() as demo:
     # clear_btn.click(clear, [], [])
 if __name__ == "__main__":
     demo.queue(max_size=5)
-    demo.launch(server_name="0.0.0.0")
+    demo.launch()
