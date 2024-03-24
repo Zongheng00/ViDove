@@ -113,7 +113,9 @@ def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_
 
 with gr.Blocks() as demo:
     gr.Markdown("# ViDove V0.1.0: Pigeon AI Video Translation Toolkit Demo")
-    gr.Markdown("Our website: https://pigeonai.club/")
+    gr.Markdown("Our Website: https://pigeonai.club/")
+    gr.Markdown("ViDove Discussion Group: 749825364")
+    gr.Markdown("ViDove Discord: coming soon")
     gr.Markdown("Github: https://github.com/pigeonai-org/ViDove")
     gr.Markdown("Please give us a star on GitHub!")
     gr.Markdown("### Input")
