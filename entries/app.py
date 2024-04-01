@@ -1,15 +1,12 @@
-import __init_lib_path
-import gradio as gr
-from src.task import Task
-import logging
-from yaml import Loader, Dumper, load, dump
-import os
 from pathlib import Path
-from datetime import datetime
-import shutil
 from uuid import uuid4
-import torch
+
+import gradio as gr
 import stable_whisper
+import torch
+from yaml import Loader, load
+
+from src.task import Task
 
 launch_config = "./configs/local_launch.yaml"
 task_config = './configs/task_config.yaml'
@@ -149,7 +146,8 @@ with gr.Blocks() as demo:
     with gr.Tab("Post-process"):
         opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
     with gr.Tab("Translation"):
-        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview", "SC2 Domain Expert(beta test)"], label="Select Translation Model", value="gpt-4-1106-preview")
+        gr.Markdown("## Translation Settings: Now we implemented Assistant model for SC2 domain, more models will be added soon!")
+        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview", "Assistant"], label="Select Translation Model", value="gpt-4-1106-preview")
         default_chunksize = 2000 if opt_src.value == "EN" else 100
         chunk_size = gr.Number(value=default_chunksize, info="100 for ZH as source language")
     
@@ -161,11 +159,7 @@ with gr.Blocks() as demo:
     file_output = gr.components.File(label="Output")
 
     submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=file_output)
-    # def clear():
-    #     file_output.clear()
 
-    # clear_btn = gr.Button(value="Clear")
-    # clear_btn.click(clear, [], [])
 if __name__ == "__main__":
     demo.queue(max_size=5)
     demo.launch(server_name="0.0.0.0")

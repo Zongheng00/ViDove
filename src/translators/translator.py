@@ -1,12 +1,13 @@
-from os import getenv
-import traceback
 import logging
-from openai import OpenAI
+import traceback
 from time import sleep
+
 from tqdm import tqdm
-from .LLM import LLM
-from .assistant import Assistant
+
 from src.srt_util.srt import split_script
+
+from .assistant import Assistant
+from .LLM import LLM
 
 SUPPORT_LANG_MAP = {
     "EN": "English",
@@ -60,7 +61,7 @@ class Translator:
         prompt = f"""
             you are a translation assistant, your job is to translate a video in domain of {self.domain} from {src_lang} to {tgt_lang}, 
             you will be provided with a segement in {src_lang} parsed by line, where your translation text should keep the original 
-            meaning and the number of lines.
+            meaning and the number of lines. DO NOT INCLUDE THE INDEX NUMBER IN YOUR TRANSLATION.
             """
         logging.info(f"System Prompt: {prompt}")
         return prompt

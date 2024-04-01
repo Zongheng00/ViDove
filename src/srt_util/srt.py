@@ -8,6 +8,7 @@ import logging
 import openai
 from tqdm import tqdm
 from .. import dict_util
+from openai import OpenAI
 
 # punctuation dictionary for supported languages
 punctuation_dict = {
@@ -163,6 +164,7 @@ class SrtScript(object):
         self.src_lang = src_lang
         self.tgt_lang = tgt_lang
         self.segments = [SrtSegment(self.src_lang, self.tgt_lang, seg) for seg in segments]
+        self.client = OpenAI()
 
         if self.domain != "General":
             if os.path.exists(f"{dict_path}/{self.domain}") and\
@@ -262,7 +264,8 @@ class SrtScript(object):
 
         def inner_func(target, input_str):
             # handling merge sentences issue.
-            response = openai.ChatCompletion.create(
+
+            response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system",
@@ -272,7 +275,7 @@ class SrtScript(object):
                 ],
                 temperature=0.15
             )
-            return response['choices'][0]['message']['content'].strip()
+            return response.choices[0].message.content.strip()
 
         # handling merge sentences issue.
         lines = translate.split('\n\n')

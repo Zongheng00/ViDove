@@ -1,5 +1,7 @@
 import time
+
 from openai import OpenAI
+
 from .abs_model import AbsModel
 
 SUPPORT_DOMAIN = ["SC2"]
@@ -25,7 +27,8 @@ class Assistant(AbsModel):
         thread_message = self.client.beta.threads.messages.create(
             thread_id=self.thread_id,
             role="user",
-            content= self.system_prompt  + "/n" + input
+            content= self.system_prompt  + "/n" + input,
+            file_ids=["file-ZWoegkS6ha4nrfie0iEchnVi", "file-bT6x3aqi4MsG9eKmIizFmzZE"]
         )
 
         run = self.client.beta.threads.runs.create(
