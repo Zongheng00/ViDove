@@ -53,6 +53,7 @@
 </details>
 
 ## Release
+- [03/03/24]  We are happy to tell you that you could try to use RAG-boosted translation by selecting specific domain assistant in the UI under the translation section.
 - [12/20]🔥**ViDove V0.1 Released**: We are happy to release our initial version of ViDove: End-to-end Video Translation Toolkit. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -142,8 +143,6 @@ Here's why:
    ```sh
    python3 entries/app.py
    ```
-
-   #### Updated 2024/3/3: we are happy to tell you that you could try to use RAG boosted translation by selecting is_assistant in the UI under the translation section.
 
 ### Launch with configs
   - Start with Youtube Link input:
