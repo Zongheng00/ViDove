@@ -159,12 +159,13 @@ class SrtSegment(object):
 
 
 class SrtScript(object):
-    def __init__(self, src_lang, tgt_lang, segments, domain="General") -> None:
+    def __init__(self, src_lang, tgt_lang, segments, task_logger, client, domain="General") -> None:
+        self.task_logger = task_logger
         self.domain = domain
         self.src_lang = src_lang
         self.tgt_lang = tgt_lang
         self.segments = [SrtSegment(self.src_lang, self.tgt_lang, seg) for seg in segments]
-        self.client = OpenAI()
+        self.client = client
 
         if self.domain != "General":
             if os.path.exists(f"{dict_path}/{self.domain}") and\
@@ -173,12 +174,12 @@ class SrtScript(object):
                 self.dict = dict_util.term_dict(f"{dict_path}/{self.domain}", src_lang, tgt_lang)
                 ...
             else:
-                logging.error(f"domain {self.domain} or related dictionary({src_lang} or {tgt_lang}) doesn't exist, fallback to general domain, this will disable correct_with_force_term and spell_check_term")
+                self.task_logger.error(f"domain {self.domain} or related dictionary({src_lang} or {tgt_lang}) doesn't exist, fallback to general domain, this will disable correct_with_force_term and spell_check_term")
                 self.domain = "General"
 
 
     @classmethod
-    def parse_from_srt_file(cls, src_lang, tgt_lang, domain, path = None, srt_str = None):
+    def parse_from_srt_file(cls, src_lang, tgt_lang, task_logger, client, domain, path = None, srt_str = None):
         if path is not None:
             with open(path, 'r', encoding="utf-8") as f:
                 script_lines = [line.rstrip() for line in f.readlines()]
@@ -197,7 +198,7 @@ class SrtScript(object):
         else:
             for i in range(0, len(script_lines), 4):
                 segments.append(list(script_lines[i:i + 4]))
-        return cls(src_lang, tgt_lang, segments, domain)
+        return cls(src_lang, tgt_lang, segments, task_logger, client, domain)
 
     def merge_segs(self, idx_list) -> SrtSegment:
         """
@@ -222,7 +223,7 @@ class SrtScript(object):
         improper segmentation from openai-whisper.
         :return: None
         """
-        logging.info("Forming whole sentences...")
+        self.task_logger.info("Forming whole sentences...")
         merge_list = []  # a list of indices that should be merged e.g. [[0], [1, 2, 3, 4], [5, 6], [7]]
         sentence = []
         ending_puncs = punctuation_dict[self.src_lang]["sentence_end"]
@@ -239,7 +240,7 @@ class SrtScript(object):
         segments = []
         for idx_list in merge_list:
             if len(idx_list) > 1:
-                logging.info("merging segments: %s", idx_list)
+                self.task_logger.info("merging segments: %s", idx_list)
             segments.append(self.merge_segs(idx_list))
 
         self.segments = segments
@@ -251,7 +252,7 @@ class SrtScript(object):
         """
         for i, seg in enumerate(self.segments):
             seg.remove_trans_punc()
-        logging.info("Removed punctuation in translation.")
+        self.task_logger.info("Removed punctuation in translation.")
 
     def set_translation(self, translate: str, id_range: tuple, model, video_name, video_link=None):
         start_seg_id = id_range[0]
@@ -285,7 +286,7 @@ class SrtScript(object):
             while count < 5 and len(lines) != (end_seg_id - start_seg_id + 1):
                 count += 1
                 print("Solving Unmatched Lines|iteration {}".format(count))
-                logging.error("Solving Unmatched Lines|iteration {}".format(count))
+                self.task_logger.error("Solving Unmatched Lines|iteration {}".format(count))
 
                 flag = True
                 while flag:
@@ -295,15 +296,15 @@ class SrtScript(object):
                     except Exception as e:
                         print("An error has occurred during solving unmatched lines:", e)
                         print("Retrying...")
-                        logging.error("An error has occurred during solving unmatched lines:", e)
-                        logging.error("Retrying...")
+                        self.task_logger.error("An error has occurred during solving unmatched lines:", e)
+                        self.task_logger.error("Retrying...")
                         flag = True
                 lines = translate.split('\n')
 
             if len(lines) < (end_seg_id - start_seg_id + 1):
                 solved = False
                 print("Failed Solving unmatched lines, Manually parse needed")
-                logging.error("Failed Solving unmatched lines, Manually parse needed")
+                self.task_logger.error("Failed Solving unmatched lines, Manually parse needed")
 
             # FIXME: put the error log in our log file
             if not os.path.exists("./logs"):
@@ -423,18 +424,18 @@ class SrtScript(object):
 
     def check_len_and_split(self, text_threshold=30, time_threshold=1.0):
         # if sentence length >= threshold and sentence duration > time_threshold, split this segments to two
-        logging.info("performing check_len_and_split")
+        self.task_logger.info("performing check_len_and_split")
         segments = []
         for i, seg in enumerate(self.segments):
             if len(seg.translation) > text_threshold and (seg.end - seg.start) > time_threshold:
                 seg_list = self.split_seg(seg, text_threshold, time_threshold)
-                logging.info("splitting segment {} in to {} parts".format(i + 1, len(seg_list)))
+                self.task_logger.info("splitting segment {} in to {} parts".format(i + 1, len(seg_list)))
                 segments += seg_list
             else:
                 segments.append(seg)
 
         self.segments = segments
-        logging.info("check_len_and_split finished")
+        self.task_logger.info("check_len_and_split finished")
 
     def check_len_and_split_range(self, range, text_threshold=30, time_threshold=1.0):
         # DEPRECATED
@@ -456,11 +457,11 @@ class SrtScript(object):
 
     def correct_with_force_term(self):
         ## force term correction
-        logging.info("performing force term correction")
+        self.task_logger.info("performing force term correction")
 
         # check domain
         if self.domain == "General":
-            logging.info("General domain could not perform correct_with_force_term. skip this step.")
+            self.task_logger.info("General domain could not perform correct_with_force_term. skip this step.")
             pass
         else:
             keywords = list(self.dict.keys())
@@ -471,10 +472,10 @@ class SrtScript(object):
                     if word in seg.source_text.lower():
                         seg.source_text = re.sub(fr"({word}es|{word}s?)\b", "{}".format(self.dict.get(word)),
                                                 seg.source_text, flags=re.IGNORECASE)
-                        logging.info(
+                        self.task_logger.info(
                             "replace term: " + word + " --> " + self.dict.get(word) + " in time stamp {}".format(
                                 i + 1))
-                        logging.info("source text becomes: " + seg.source_text)
+                        self.task_logger.info("source text becomes: " + seg.source_text)
 
 
     def fetchfunc(self, word, threshold):
@@ -503,11 +504,11 @@ class SrtScript(object):
         return res
 
     def spell_check_term(self):
-        logging.info("performing spell check")
+        self.task_logger.info("performing spell check")
 
         # check domain
         if self.domain == "General":
-            logging.info("General domain could not perform spell_check_term. skip this step.")
+            self.task_logger.info("General domain could not perform spell_check_term. skip this step.")
             pass
 
         import enchant
@@ -522,7 +523,7 @@ class SrtScript(object):
                     distance, correct_term = self.fetchfunc(real_word, 0.3)
                     if distance != 0:
                         seg.source_text = re.sub(word[:pos], correct_term, seg.source_text, flags=re.IGNORECASE)
-                        logging.info(
+                        self.task_logger.info(
                             "replace: " + word[:pos] + " to " + correct_term + "\t distance = " + str(distance))
 
     def get_real_word(self, word_list: list):
@@ -579,13 +580,13 @@ class SrtScript(object):
         pass
 
     def write_srt_file_translate(self, path: str):
-        logging.info("writing to " + path)
+        self.task_logger.info("writing to " + path)
         with open(path, "w", encoding='utf-8') as f:
             f.write(self.reform_trans_str())
         pass
 
     def write_srt_file_bilingual(self, path: str):
-        logging.info("writing to " + path)
+        self.task_logger.info("writing to " + path)
         with open(path, "w", encoding='utf-8') as f:
             f.write(self.form_bilingual_str())
         pass

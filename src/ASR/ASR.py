@@ -6,19 +6,19 @@ import torch
 import stable_whisper
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-def get_transcript(method, src_srt_path, source_lang, audio_path, pre_load_asr_model = None):
+def get_transcript(method, src_srt_path, source_lang, audio_path, client, task_logger, pre_load_asr_model = None):
 
     is_trans = False # is trans flag 
 
     if not Path.exists(src_srt_path):
         # extract script from audio
-        logging.info("extract script from audio")
-        logging.info(f"Module 1: ASR inference method: {method}")
+        task_logger.info("extract script from audio")
+        task_logger.info(f"Module 1: ASR inference method: {method}")
         init_prompt = "Hello, welcome to my lecture." if source_lang == "EN" else ""
 
         # process the audio by method
         if method == "whisper-api": 
-            transcript = get_transcript_whisper_api(audio_path, source_lang, init_prompt)
+            transcript = get_transcript_whisper_api(audio_path, source_lang, init_prompt, client)
             is_trans = True
         elif method == "whisper-large-v3":
             transcript = get_transcript_whisper_large_v3(audio_path, pre_load_asr_model)
@@ -36,10 +36,8 @@ def get_transcript(method, src_srt_path, source_lang, audio_path, pre_load_asr_m
     else: 
         return None
         
-def get_transcript_whisper_api(audio_path, source_lang, init_prompt):
+def get_transcript_whisper_api(audio_path, source_lang, init_prompt, client):
     with open(audio_path, 'rb') as audio_file:
-        # client = openai.Client()
-        client = OpenAI()
         transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file, response_format="srt", language=source_lang.lower(), prompt=init_prompt)
     return transcript
     

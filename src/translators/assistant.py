@@ -2,14 +2,15 @@ import time
 
 from openai import OpenAI
 
-from .abs_model import AbsModel
+from .abs_api_model import AbsApiModel
 
 SUPPORT_DOMAIN = ["SC2"]
 ID_MAP = {"SC2": "asst_v1cEwYXexhfmkPEYtISyIjYI"} # should move to secrete place in the future
 
-class Assistant(AbsModel):   
-    def __init__(self, system_prompt, temp = 0.15, domain = "SC2"):
-        self.client = OpenAI()
+class Assistant(AbsApiModel):   
+    def __init__(self, client, system_prompt, temp = 0.15, domain = "SC2"):
+        super().__init__()
+        self.client = client
         self.thread_id = self.client.beta.threads.create().id
         if domain not in SUPPORT_DOMAIN:
             raise NotImplementedError

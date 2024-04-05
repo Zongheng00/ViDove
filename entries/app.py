@@ -1,6 +1,8 @@
+import __init_lib_path
 from pathlib import Path
 from uuid import uuid4
-
+from cryptography.fernet import Fernet
+import os 
 import gradio as gr
 import stable_whisper
 import torch
@@ -15,9 +17,29 @@ task_config = './configs/task_config.yaml'
 model_dict = {"stable_large": None, "stable_medium": None, "stable_base": None}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
+def init(apikey, opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model):
     launch_cfg = load(open(launch_config), Loader=Loader)
     task_cfg = load(open(task_config), Loader=Loader)
+
+    if launch_cfg["environ"] == "demo":
+        VIDOVE_DECODE_KEY = os.getenv("VIDOVE_DECODE_KEY")
+        # overwrite api key
+        if apikey != "":
+            try:
+                fernet = Fernet(VIDOVE_DECODE_KEY.encode())
+                apikey = fernet.decrypt(apikey.encode()).decode()
+            except:
+                raise gr.Error("Invalid API key")
+            task_cfg["OPENAI_API_KEY"] = apikey
+        else:
+            task_cfg["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+            translation_model = "gpt-3.5-turbo"
+            gr.Warning("Free Mode: API key is not provided, you can only use gpt-3.5-turbo model for translation.")
+    elif launch_cfg["environ"] == "local":
+        if apikey != "":
+            task_cfg["OPENAI_API_KEY"] = apikey
+        else:
+            task_cfg["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
     # overwrite config file
     task_cfg["source_lang"] = src_lang
@@ -90,37 +112,45 @@ def init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_met
 
     return task_id, task_dir, task_cfg, pre_load_asr_model
 
-def process_input(video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
-    task_id, task_dir, task_cfg, pre_load_asr_model = init(opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
+def process_input(apikey, video_file, audio_file, srt_file, youtube_link, src_lang, tgt_lang, domain, opt_asr_method, opt_post, opt_pre, output_type, chunk_size, translation_model):
+    task_id, task_dir, task_cfg, pre_load_asr_model = init(apikey, opt_post, opt_pre, output_type, src_lang, tgt_lang, domain, opt_asr_method, chunk_size, translation_model)
     if youtube_link:
         task = Task.fromYoutubeLink(youtube_link, task_id, task_dir, task_cfg)
         task.run(pre_load_asr_model)
-        return task.result
+        return task.result, task.log_dir
     elif audio_file is not None:
         task = Task.fromAudioFile(audio_file.name, task_id, task_dir, task_cfg)
         task.run(pre_load_asr_model)
-        return task.result
+        return task.result, task.log_dir
     elif srt_file is not None:
         task = Task.fromSRTFile(srt_file.name, task_id, task_dir, task_cfg)
         task.run()
-        return task.result
+        return task.result, task.log_dir
     elif video_file is not None:
         task = Task.fromVideoFile(video_file, task_id, task_dir, task_cfg)
         task.run(pre_load_asr_model)
-        return task.result
+        return task.result, task.log_dir
     else:
         return None
 
 
-
 with gr.Blocks() as demo:
-    gr.Markdown("# ViDove V0.1.0: Pigeon AI Video Translation Toolkit Demo")
-    gr.Markdown("Our Website: https://pigeonai.club/")
-    gr.Markdown("ViDove Discussion Group: 749825364")
-    gr.Markdown("ViDove Discord: coming soon")
-    gr.Markdown("Github: https://github.com/pigeonai-org/ViDove")
-    gr.Markdown("Please give us a star on GitHub!")
+    gr.Markdown("# ViDove V0.1.1: Pigeon AI Video Translation Toolkit Demo")
+    gr.Markdown("### General Information")
+    gr.Markdown("[Official Website](https://pigeonai.club/) / [Github](https://github.com/pigeonai-org/ViDove) / [Discord](https://discord.gg/9EcCBvAN87) / [Feedback Form](https://wj.qq.com/s2/14361192/a182/) / [Bilibili](https://space.bilibili.com/195670539)")
+    gr.Markdown("Discussion Group(QQ): 749825364 / Email: gggzmz@163.com")
+    gr.Markdown("**Please give us a star on GitHub!**")
+
+    gr.Markdown("### Update Log")
+    gr.Markdown("- 2024-04-05: ViDove V0.1.1 is released! Now we support SC2 domain expert translation model.")
+
+    gr.Markdown("### Purchase")
+    gr.Markdown("Note that you can use our demo without purchasing an API key, but you can only use the **gpt-3.5-turbo** model for translation. If you want to use other models, please purchase an API key.")
+    gr.Markdown("[Purchase API Key Here](https://afdian.net/a/gggzmz)")
+    
     gr.Markdown("### Input")
+
+    apikey = gr.components.Textbox(label="Insert Your API Key Here", type="password")
     with gr.Tab("Youtube Link"):
         link = gr.components.Textbox(label="Enter a YouTube URL")
     with gr.Tab("Video File"):
@@ -136,7 +166,7 @@ with gr.Blocks() as demo:
         opt_tgt = gr.components.Dropdown(choices=["ZH", "EN", "KR"], label="Select Target Language", value="ZH")
         if opt_src.value == opt_tgt.value:
             gr.Error("Source and Target Language should be different")
-        opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Domain", value="General")
+        opt_domain = gr.components.Dropdown(choices=["General", "SC2"], label="Select Dictionary", value="General")
     with gr.Tab("ASR"):
         if device.type == "cuda":
             opt_asr_method = gr.components.Dropdown(choices=["whisper-api", "stable-whisper-base", "stable-whisper-medium", "stable-whisper-large"], label="Select ASR Module Inference Method", value="stable-whisper-large", info="use api if you don't have GPU")
@@ -148,8 +178,8 @@ with gr.Blocks() as demo:
     with gr.Tab("Post-process"):
         opt_post = gr.CheckboxGroup(["Split Sentence", "Remove Punc"], label="Post-process Module", info="Post-process module settings", value=["Split Sentence", "Remove Punc"])
     with gr.Tab("Translation"):
-        gr.Markdown("## Translation Settings: Now we implemented Assistant model for SC2 domain, more models will be added soon!")
-        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview", "Assistant"], label="Select Translation Model", value="gpt-4-1106-preview")
+        gr.Markdown("## Translation Settings:")
+        translation_model = gr.Dropdown(choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview", "SC2 Domain Expert(beta test)"], label="Select Translation Model", value="gpt-4-1106-preview")
         default_chunksize = 2000 if opt_src.value == "EN" else 100
         chunk_size = gr.Number(value=default_chunksize, info="100 for ZH as source language")
     
@@ -158,10 +188,12 @@ with gr.Blocks() as demo:
     submit_button = gr.Button("Submit")
 
     gr.Markdown("### Output")
-    file_output = gr.components.File(label="Output")
+    file_output = gr.components.File(label="SRT Output")
+    gr.Markdown("##### If you have any issue, please download the log file and send it to us via email or discord.")
+    log_output = gr.components.File(label="Log Output")
 
-    submit_button.click(process_input, inputs=[video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=file_output)
+    submit_button.click(process_input, inputs=[apikey, video, audio, srt, link, opt_src, opt_tgt, opt_domain, opt_asr_method, opt_post, opt_pre, opt_out, chunk_size, translation_model], outputs=[file_output, log_output])
 
 if __name__ == "__main__":
     demo.queue(max_size=5)
-    demo.launch()
+    demo.launch(show_error=True)

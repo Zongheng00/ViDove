@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 This is an abstract class for the model. It is used to define the methods that the model should have.
 """
 
-class AbsModel(ABC):
+class AbsApiModel(ABC):
     @abstractmethod
     def __init__(self):
         pass

@@ -1,9 +1,10 @@
 from openai import OpenAI
-from .abs_model import AbsModel
+from .abs_api_model import AbsApiModel
 
-class LLM(AbsModel):
-    def __init__(self, model_name, system_prompt, temp = 0.15) -> None:
-        self.client = OpenAI()
+class LLM(AbsApiModel):
+    def __init__(self, client, model_name, system_prompt, temp = 0.15) -> None:
+        super().__init__()
+        self.client = client
         if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]:
             self.model_name = model_name
         else:
