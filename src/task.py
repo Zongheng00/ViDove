@@ -389,7 +389,12 @@ class SRTTask(Task):
         new_srt_path = f"{task_local_dir}/task_{self.task_id}_{self.source_lang}.srt"
         self.task_logger.info(f"Copy video file to: {new_srt_path}")
         shutil.copyfile(srt_path, new_srt_path)
-        self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, self.target_lang, domain=self.field, path=srt_path)
+        self.SRT_Script = SrtScript.parse_from_srt_file(self.source_lang, 
+                                                        self.target_lang, 
+                                                        self.task_logger, 
+                                                        self.client, 
+                                                        domain = self.field, 
+                                                        path = srt_path)
 
     def run(self):
         self.task_logger.info(f"Video File Dir: {self.video_path}")
