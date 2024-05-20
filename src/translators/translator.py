@@ -64,7 +64,7 @@ class Translator:
         prompt = f"""
             you are a translation assistant, your job is to translate a video in domain of {self.domain} from {src_lang} to {tgt_lang}, 
             you will be provided with a segement in {src_lang} parsed by line, where your translation text should keep the original 
-            meaning and the number of lines. DO NOT INCLUDE THE INDEX NUMBER IN YOUR TRANSLATION.
+            meaning and the number of lines. DO NOT INCLUDE THE INDEX NUMBER IN YOUR TRANSLATION.  /n/n 
             """
         self.task_logger.info(f"System Prompt: {prompt}")
         return prompt

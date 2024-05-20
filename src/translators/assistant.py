@@ -8,10 +8,14 @@ SUPPORT_DOMAIN = ["SC2"]
 ID_MAP = {"SC2": "asst_v1cEwYXexhfmkPEYtISyIjYI"} # should move to secrete place in the future
 
 class Assistant(AbsApiModel):   
-    def __init__(self, client, system_prompt, temp = 0.15, domain = "SC2"):
+    def __init__(self, client:OpenAI, system_prompt, temp = 0.15, domain = "SC2"):
         super().__init__()
         self.client = client
-        self.thread_id = self.client.beta.threads.create().id
+        self.thread_id = self.client.beta.threads.create(tool_resources={
+            "file_search": {
+                "vector_store_ids": ["vs_gtVvYnbEWLmmGNlANVmb4Lz3"]
+            }
+        }).id
         if domain not in SUPPORT_DOMAIN:
             raise NotImplementedError
         self.assistant_id = ID_MAP[domain]
@@ -29,10 +33,10 @@ class Assistant(AbsApiModel):
             thread_id=self.thread_id,
             role="user",
             content= self.system_prompt  + "/n" + input,
-            file_ids=["file-ZWoegkS6ha4nrfie0iEchnVi", "file-bT6x3aqi4MsG9eKmIizFmzZE"]
+            # file_ids=["file-ZWoegkS6ha4nrfie0iEchnVi", "file-bT6x3aqi4MsG9eKmIizFmzZE"]
         )
 
-        run = self.client.beta.threads.runs.create(
+        run = self.client.beta.threads.runs.create_and_poll(
             thread_id=self.thread_id,
             assistant_id=self.assistant_id,
         )
@@ -54,6 +58,6 @@ class Assistant(AbsApiModel):
                 run_id=run.id,
             )
             # print(run.status)
-            time.sleep(0.5)
+            time.sleep(0.2)
         return run
     
