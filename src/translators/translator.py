@@ -38,7 +38,7 @@ class Translator:
 
         if self.model_name == "Assistant":
             self.translator = Assistant(self.client, system_prompt = self.system_prompt, domain = domain)
-        elif self.model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]:
+        elif self.model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]:
             self.translator = LLM(self.client, self.model_name, system_prompt = self.system_prompt)
         else:
             print(f"Unsupported model name: {self.model_name}")
