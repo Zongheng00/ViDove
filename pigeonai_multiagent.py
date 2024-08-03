@@ -100,7 +100,6 @@ def addition_by_subtraction_collaboration(content, pos_tag, max_iterations, doma
         print(reply)
 
         if history == reply:
-          print("hello dog")
           return reply
         else:
           content = reply
