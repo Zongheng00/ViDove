@@ -39,7 +39,7 @@ class Translator:
         if self.model_name == "Assistant":
             self.translator = Assistant(self.client, system_prompt = self.system_prompt, domain = domain)
         elif self.model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]:
-            if the "LLM" in model_name:
+            if "LLM" in model_name:
               self.translator = LLM(self.client, self.model_name, system_prompt = self.system_prompt)
             else:
               self.translator = MTA(self.client, self.model_name, self.domain, self.src_lang, self.tgt_lang, SUPPORT_LANG_MAP[self.tgt_lang])
