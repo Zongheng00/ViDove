@@ -83,8 +83,8 @@ class MTA(AbsApiModel):
          reply = response.choices[0].message.content
 
          if history == reply:
-          return reply
-          else:
-            content = reply
-            history = reply
-            current_iteration += 1
+             return reply
+         else:
+             content = reply
+             history = reply
+             current_iteration += 1
