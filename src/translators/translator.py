@@ -9,6 +9,7 @@ from src.srt_util.srt import split_script
 
 from .assistant import Assistant
 from .LLM import LLM
+from .MTA import MTA
 
 SUPPORT_LANG_MAP = {
     "EN": "English",
