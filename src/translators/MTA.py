@@ -85,6 +85,5 @@ class MTA(AbsApiModel):
          if history == reply:
              return reply
          else:
-             content = reply
              history = reply
              current_iteration += 1
