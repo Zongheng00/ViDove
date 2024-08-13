@@ -33,7 +33,6 @@ class Assistant(AbsApiModel):
             thread_id=self.thread_id,
             role="user",
             content= self.system_prompt  + "/n" + input,
-            # file_ids=["file-ZWoegkS6ha4nrfie0iEchnVi", "file-bT6x3aqi4MsG9eKmIizFmzZE"]
         )
 
         run = self.client.beta.threads.runs.create_and_poll(
