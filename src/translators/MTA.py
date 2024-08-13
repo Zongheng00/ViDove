@@ -60,7 +60,7 @@ class MTA(AbsApiModel):
 
          # Editor Agent
          prompt = f"""Your task is to carefully read, then edit, a translation of the content in the {history} from {self.source_language} to {self.target_language}, taking into\
-         account a list of expert suggestions and constructive criticisms.
+         account a list of expert suggestions and constructive criticisms. Expert suggestions: {suggestion}
 
          Please take into account the expert suggestions when editing the translation. Edit the translation by ensuring:
          (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
