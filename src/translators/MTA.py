@@ -16,74 +16,75 @@ class MTA(AbsApiModel):
         self.target_country = target_country
 
     def send_request(self, input):
-      current_iteration = 0
-      history = None
+        current_iteration = 0
+        history = None
+        
+        # Translator Agent
+        translation_prompt = f"""This is an {self.source_language} to {self.target_language} translation in the field of {self.domain}, please provide the {self.target_language} translation for this text.\
+        Do not provide any explanations or text apart from the translation. {self.source_language}: {input} {self.target_language}:"""
 
-      # Translator Agent
-      translation_prompt = f"""This is an {self.source_language} to {self.target_language} translation in the field of {self.domain}, please provide the {self.target_language} translation for this text.\
-      Do not provide any explanations or text apart from the translation. {self.source_language}: {input} {self.target_language}:"""
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": translation_prompt
+                    }
+                ]
+            )
+        history = response.choices[0].message.content
 
-      response = self.client.chat.completions.create(
-          model=self.model_name,
-          messages=[
-              {
-                  "role": "user",
-                  "content": translation_prompt
-                  }
-              ]
-          )
-      history = response.choices[0].message.content
+        while current_iteration <= self.max_iterations:
+            # Suggestions Agent
 
-      while current_iteration <= self.max_iterations:
-         # Suggestions Agent
+            reflection_prompt = f"""Your task is to carefully read a content in the {history} and a translation from {self.source_language} to {self.target_language}, and then give constructive criticism and helpful suggestions to improve the translation. \
+            The final style and tone of the translation should match the style of {self.target_language} colloquially spoken in {self.target_country}. When writing suggestions, pay attention to whether there are ways to improve the translation's \n\
+            (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
+            (ii) fluency (by applying {self.target_language} grammar, spelling and punctuation rules, and ensuring there are no unnecessary repetitions),
+            (iii) style (by ensuring the translations reflect the style of the source text and take into account any cultural context),
+            (iv) terminology (by ensuring terminology use is consistent and reflects the source text domain; and by only ensuring you use equivalent idioms {self.target_language}).
+            Write a list of specific, helpful and constructive suggestions for improving the translation.
+            Each suggestion should address one specific part of the translation.
+            Output only the suggestions and nothing else."""
 
-         reflection_prompt = f"""Your task is to carefully read a content in the {history} and a translation from {self.source_language} to {self.target_language}, and then give constructive criticism and helpful suggestions to improve the translation. \
-         The final style and tone of the translation should match the style of {self.target_language} colloquially spoken in {self.target_country}. When writing suggestions, pay attention to whether there are ways to improve the translation's \n\
-         (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
-         (ii) fluency (by applying {self.target_language} grammar, spelling and punctuation rules, and ensuring there are no unnecessary repetitions),
-         (iii) style (by ensuring the translations reflect the style of the source text and take into account any cultural context),
-         (iv) terminology (by ensuring terminology use is consistent and reflects the source text domain; and by only ensuring you use equivalent idioms {self.target_language}).
-         Write a list of specific, helpful and constructive suggestions for improving the translation.
-         Each suggestion should address one specific part of the translation.
-         Output only the suggestions and nothing else."""
+            response =self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": reflection_prompt
+                        }
+                    ]
+                )
+            suggestion = response.choices[0].message.content
 
-         response =self.client.chat.completions.create(
-             model=self.model_name,
-             messages=[
-                 {
-                     "role": "user",
-                     "content": reflection_prompt
-                     }
-                 ]
-             )
-         suggestion = response.choices[0].message.content
+            # Editor Agent
+            prompt = f"""Your task is to carefully read, then edit, a translation of the content in the {history} from {self.source_language} to {self.target_language}, taking into\
+            account a list of expert suggestions and constructive criticisms. Expert suggestions: {suggestion}
 
-         # Editor Agent
-         prompt = f"""Your task is to carefully read, then edit, a translation of the content in the {history} from {self.source_language} to {self.target_language}, taking into\
-         account a list of expert suggestions and constructive criticisms. Expert suggestions: {suggestion}
+            Please take into account the expert suggestions when editing the translation. Edit the translation by ensuring:
+            (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
+            (ii) fluency (by applying {self.target_language} grammar, spelling and punctuation rules and ensuring there are no unnecessary repetitions),
+            (iii) style (by ensuring the translations reflect the style of the source text)
+            (iv) terminology (inappropriate for context, inconsistent use), or
+            (v) other errors.
 
-         Please take into account the expert suggestions when editing the translation. Edit the translation by ensuring:
-         (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
-         (ii) fluency (by applying {self.target_language} grammar, spelling and punctuation rules and ensuring there are no unnecessary repetitions),
-         (iii) style (by ensuring the translations reflect the style of the source text)
-         (iv) terminology (inappropriate for context, inconsistent use), or
-         (v) other errors.
+            Output only the new translation and nothing else."""
 
-         Output only the new translation and nothing else."""
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                        }
+                    ]
+                )
+            reply = response.choices[0].message.content
 
-         response = self.client.chat.completions.create(
-             model=self.model_name,
-             messages=[
-                 {
-                     "role": "user",
-                     "content": prompt
-                     }
-                 ]
-             )
-         reply = response.choices[0].message.content
-
-         if history == reply:
-             return reply
-         else:
-             history = reply
-             current_iteration += 1
+            if history == reply:
+                return reply
+            else:
+                history = reply
+                current_iteration += 1
+        return reply
