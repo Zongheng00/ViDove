@@ -2,7 +2,7 @@ from openai import OpenAI
 from .abs_api_model import AbsApiModel
 
 class MTA(AbsApiModel):
-    def __init__(self, client, model_name, domain, source_language, target_language, target_country, max_iterations=100) -> None:
+    def __init__(self, client, model_name, domain, source_language, target_language, target_country, max_iterations=5) -> None:
         super().__init__()
         self.client = client
         if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]:
