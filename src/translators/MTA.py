@@ -2,7 +2,7 @@ from openai import OpenAI
 from .abs_api_model import AbsApiModel
 
 class MTA(AbsApiModel):
-    def __init__(self, client, model_name, domain, source_language, target_language, target_country, max_iterations=3) -> None:
+    def __init__(self, client:OpenAI, model_name:str, domain:str, source_language:str, target_language:str, target_country:str, max_iterations:int=5) -> None:
         super().__init__()
         self.client = client
         if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]:
@@ -18,7 +18,7 @@ class MTA(AbsApiModel):
     def send_request(self, input):
         current_iteration = 0
         history = None
-        
+
         # Translator Agent
         translation_prompt = f"""This is an {self.source_language} to {self.target_language} translation in the field of {self.domain}, please provide the {self.target_language} translation for this text.\
         Do not provide any explanations or text apart from the translation. {self.source_language}: {input} {self.target_language}:"""
@@ -60,7 +60,10 @@ class MTA(AbsApiModel):
 
             # Editor Agent
             prompt = f"""Your task is to carefully read, then edit, a translation of the content in the {history} from {self.source_language} to {self.target_language}, taking into\
-            account a list of expert suggestions and constructive criticisms. Expert suggestions: {suggestion}
+            account a list of expert suggestions and constructive criticisms.
+
+            // Expert Suggestions:
+                {suggestion}
 
             Please take into account the expert suggestions when editing the translation. Edit the translation by ensuring:
             (i) accuracy (by correcting errors of addition, mistranslation, omission, or untranslated text),
