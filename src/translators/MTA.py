@@ -87,7 +87,7 @@ class MTA(AbsApiModel):
                     ]
                 )
             reply = response.choices[0].message.content
-            self.logger.info(suggestion)
+            self.logger.info(reply)
             if history == reply:
                 return reply
             else:
