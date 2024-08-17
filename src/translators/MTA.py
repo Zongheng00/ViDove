@@ -14,6 +14,7 @@ class MTA(AbsApiModel):
         self.source_language = source_language
         self.target_language = target_language
         self.target_country = target_country
+        self.logger=logger
 
     def send_request(self, input):
         current_iteration = 0
@@ -58,7 +59,7 @@ class MTA(AbsApiModel):
                 )
             suggestion = response.choices[0].message.content
 
-            logger.info(suggestion)
+            self.logger.info(suggestion)
 
             # Editor Agent
             prompt = f"""Your task is to carefully read, then edit, a translation of the content in the {history} from {self.source_language} to {self.target_language}, taking into\
@@ -86,7 +87,7 @@ class MTA(AbsApiModel):
                     ]
                 )
             reply = response.choices[0].message.content
-            logger.info(suggestion)
+            self.logger.info(suggestion)
             if history == reply:
                 return reply
             else:
